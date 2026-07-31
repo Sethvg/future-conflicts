@@ -1,0 +1,81 @@
+{
+  "$schema": "../../.claude/pixelforge/descriptor.schema.json",
+  "name": "future-conflicts",
+  "pitch": "Advance-Wars-style turn-based tactics: grid battles between the Blue Army (player) and Red Army (AI), with commanders, economy, and fog of war.",
+  "engine": "kmp-compose",
+  "lang": "kotlin",
+  "core": {
+    "dir": "composeApp/src/commonMain/kotlin/com/example/futureconflicts/game",
+    "entry": "Battle.apply(action: Action): Boolean  // single mutation funnel; Action is a sealed type (Wait/Attack/Capture/Build/Upgrade/SupplyDrop/EndTurn)",
+    "determinism": "Event-driven, turn-based (no continuous loop). EndTurn resolves the enemy turn synchronously and instantly. Seeded-RNG supply drops ARE implemented: Battle(seed: Long = DEFAULT_SEED = 0x5EED_1234L) holds `rng = Random(seed)`; beginTurn() emits Action.SupplyDrop(team, Supply.roll(rng)) every Supply.INTERVAL (7) turns per side; execSupplyDrop applies GOLD/REINFORCE/HEAL/REVEAL boons; restart() reseeds. Runs are reproducible/replay-friendly given (seed, input sequence).",
+    "invariants": [
+      "every unit's hp is in 0..10",
+      "no two units occupy the same tile",
+      "per-team gold is never negative",
+      "winner, once set, never changes (monotonic)",
+      "effective stats fold base + commander passives + elite bonuses via the stat pipeline (effectiveMove/effectiveMaxRange/attackMul/defenseMul)"
+    ]
+  },
+  "render": {
+    "dir": "composeApp/src/commonMain/kotlin/com/example/futureconflicts/ui",
+    "entry": "GameScreen.kt — a single Compose Canvas (drawRect/drawRoundRect tiles + glyphs; the ONLY gameplay file that touches Compose)",
+    "reactivity": "MANUAL: GameScreen holds `var version by mutableStateOf(0)`; an `act { }` wrapper bumps `version++` after every core mutation. New renderer-visible state requires a version++ or it won't repaint.",
+    "spriteRegistry": "none yet — rendering is primitives + letter glyphs; sprite pass planned in docs/ART.md"
+  },
+  "commands": {
+    "env": [
+      "export JAVA_HOME=\"/home/kalieki/Downloads/android-studio-quail3-linux/android-studio/jbr\"",
+      "export PATH=\"$JAVA_HOME/bin:$PATH\""
+    ],
+    "hostTest": "./gradlew :composeApp:jvmTest",
+    "nativeCheck": null,
+    "build": "./gradlew :androidApp:assembleDebug",
+    "install": "./gradlew :androidApp:installDebug",
+    "gotcha": "The jvm() target exists ONLY for host testing — the app ships from androidLibrary + iOS. Never pipe gradlew through tail/head when you need the result; redirect to a file and check $? or grep 'BUILD SUCCESSFUL'/'BUILD FAILED'."
+  },
+  "testing": {
+    "framework": "kotlin.test",
+    "dir": "composeApp/src/commonTest/kotlin/com/example/futureconflicts/game",
+    "support": "TestSupport.kt — flatMap(), occupancy(), battleOf(), battleWith() build tiny deterministic scenarios.",
+    "policy": "Add/update tests with every change; commit only when green. (README/ROADMAP claim 38 tests but there are 45 — a doc-sync target.)"
+  },
+  "tuning": {
+    "centralized": false,
+    "files": [
+      "game/Combat.kt — hand-written 6x6 base-damage matchup table + terrain/HP scaling",
+      "game/Units.kt — per-UnitType maxMove/minRange/maxRange/cost/vision/canCapture",
+      "game/Economy.kt — STARTING_GOLD=5000, income 100/level, upgrade 1000, CITY_MAX_LEVEL=3",
+      "game/Commander.kt — passive magnitudes, Elite bonuses (2x cost, +1 move, +20% FP, +10% armor), rebuy multipliers 1.4-1.6"
+    ],
+    "note": "Constants are inline across these files (admitted first-guess in BACKLOG [balance]). A sweep should extract them into a single Balance object in game/ as step 0. NOTE: enemy AI has no economy, so auto-play balancing is currently limited to the tactical layer."
+  },
+  "content": {
+    "maps": {
+      "where": "game/GameMap.kt (Scenarios.twinRidges is the only map)",
+      "format": "ascii-rows",
+      "legend": ". plains, - road, f forest, m mountain, c city, s sea, H HQ",
+      "validate": "Movement.reachable (no sealed armies), both HQs present, symmetry, balanced city counts. There is no loader/editor yet."
+    },
+    "factions": {
+      "where": "game/Commander.kt (Commanders object — 3 hardcoded)",
+      "format": "data: id, name, theme, signature UnitType, rebuyMultiplier, List<Passive(kind ∈ MOVE/RANGE/FIREPOWER/ARMOR/INCOME/DISCOUNT, amount)>",
+      "validate": "auto-write a CommanderTest asserting each passive kind's effect via the stat pipeline"
+    }
+  },
+  "docs": {
+    "vision": "docs/VISION.md",
+    "design": "docs/DESIGN.md",
+    "architecture": "docs/ARCHITECTURE.md",
+    "art": "docs/ART.md",
+    "roadmap": "ROADMAP.md",
+    "backlog": "docs/BACKLOG.md",
+    "claude": "CLAUDE.md",
+    "conventions": "Keep game/ Compose/Android-free (enforced by package convention only — the :core extraction isn't done). Cut a corner -> add a BACKLOG line; fix it -> delete the line. VISION.md has an 'Open questions' section for /brainstorm."
+  },
+  "art": {
+    "pixellab": false,
+    "assetsDir": "art/ (staged source-of-truth per docs/ART.md; subdirs art/units/{infantry,mech,recon,tank,artillery,commander}.png and art/terrain/{plains,road,forest,mountain,city,hq,sea}.png, each with a manifest.md)",
+    "recolor": "author neutral gray / desaturated; runtime team-color mask/HSV retint (per docs/ART.md + CLAUDE.md)",
+    "note": "Batch-1 sprites are already generated and staged under art/ — do NOT regenerate/clobber them without cause. They are NOT yet wired into the renderer (GameScreen.kt still draws primitives + glyphs, no image loading), so art/ + sprite-wiring is the open task. CLAUDE.md/VISION reference the PixelLab MCP, but pixellab is NOT configured for this repo yet (only Rogueshapes has the server block) — add the same mcpServers block here, or promote pixellab to user scope, before generating more."
+  }
+}

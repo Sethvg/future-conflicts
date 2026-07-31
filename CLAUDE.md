@@ -88,3 +88,21 @@ config mirrors `stroads` and encodes three non-obvious fixes:
 - Colors, glyphs, and layout live in `GameScreen.kt`'s `Palette`; game balance
   (stats, damage table, map) lives in `game/`.
 - Sprite art: use the **PixelLab MCP** (`mcp__pixellab__*`) when adding real art.
+
+## Pixel Forge agents
+
+This repo has a **`.pixelforge.json`** descriptor at its root that lets a set of reusable,
+user-level game-dev agents adapt to it automatically. Roster + how the system works:
+`~/.claude/pixelforge/README.md`.
+
+- **Agents** (Agent tool): `game-test-smith` (grow the `game/` tests), `balance-simulator`
+  (headless AI/scenario sweeps over the stat/economy/commander constants), `content-forge`
+  (new maps/commanders, validated via `Movement.reachable`), `doc-sync` (reconcile docs↔code —
+  e.g. the stale "38 tests"), `sprite-wiring` (wire the staged `art/` sprites into `GameScreen.kt`),
+  `pixel-sprite-smith` (art generation).
+- **Commands:** `/brainstorm` (design partner over VISION + open questions), `/groom` (shape a
+  ROADMAP item), `/build-run` (host tests / build with the JBR handled).
+- Agents read `.pixelforge.json` first, so keep it honest — run `doc-sync` when code drifts from it.
+- Batch-1 sprites are staged in `art/` but **not yet wired** (renderer still draws primitives/glyphs).
+  The PixelLab MCP is currently configured only for the Rogueshapes repo — add its server block here
+  before generating more art.
