@@ -69,8 +69,13 @@ capturable like a city, so **map control is your build order**:
 - **Port** → ships (lander, destroyer, battleship, submarine)
 - **Drone Command** → an autonomous drone flight (special — see below)
 
-The **HQ** is income + the capture-to-win seat, and where you buy your **Commander**.
-Lose a production building and that whole category goes dark until you retake one.
+The **HQ** is income + the capture-to-win seat, builds your **Commander**, and
+**doubles as a Barracks** — you can *always* field infantry, so no loss ever fully locks
+you out. Losing a Factory/Airport/Port darkens *that* category until you retake one.
+
+**Capturing a production building grants build access only** — it never converts the
+enemy's existing units; their vehicles/ships/aircraft stay theirs. You just get to build
+there now (razed to L1 like any capture).
 
 Within a category, tiers price by power: **Basic** → **Elite/signature** (faction
 variant: stronger, pricier) → **Commander** (the hero, top of the chart).
