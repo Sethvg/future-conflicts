@@ -12,8 +12,12 @@ iOS later**. Sibling project to `stroads` (same toolchain and module structure).
 Read [docs/VISION.md](docs/VISION.md) for the north-star design (Commanders,
 economy, fog, art direction, multiplayer plan), [docs/DESIGN.md](docs/DESIGN.md)
 for current mechanics, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for code
-conventions, and [ROADMAP.md](ROADMAP.md) for the ordered plan (economy & HQ
-purchasing is next).
+conventions, and [ROADMAP.md](ROADMAP.md) for the ordered feature plan.
+
+**Backlog:** deferred polish, tech debt, and balance live in
+[docs/BACKLOG.md](docs/BACKLOG.md). **When you cut a corner to ship a feature, add
+a line there; when you fix one, delete it.** Keep it current — it's how we avoid
+losing the "we'll clean this up later" items.
 
 ## Architecture
 

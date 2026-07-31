@@ -48,11 +48,8 @@ of "Done".
 - With Actions + determinism + per-player views already in place: hot-seat first,
   then async/live online.
 
-## Known simplifications (current)
+## Polish, tech debt & known simplifications
 
-- Enemy turn resolves instantly; greedy AI **sees through fog** (ignores vision).
-- Fog is a view layer only — targeting/movement still use true positions (a hidden
-  unit can be shelled/blocks a path); fine for now, revisit with polish.
-- One built-in map ("Twin Ridges"); no loader/editor.
-- Uniform terrain move cost across unit types (no movement classes yet).
-- Rendering is colored rects + letter glyphs (art pass pending).
+These are tracked in **[docs/BACKLOG.md](docs/BACKLOG.md)** — the running list of
+corners cut, balance to tune, and polish to revisit. When you defer something to
+ship a feature, add a line there; when you fix it, delete the line.
