@@ -14,3 +14,6 @@ local.properties
 # iOS / Xcode
 xcuserdata/
 *.xcworkspace/xcuserdata/
+
+# Throwaway art preview (kept locally for A/B, not shipped)
+art/_preview_units/

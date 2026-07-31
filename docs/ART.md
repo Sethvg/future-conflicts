@@ -66,11 +66,12 @@ art/
 
 Full eventual need. `[ ]` = not started, `[~]` = generating, `[x]` = staged.
 
-**Unit map tokens (base, neutral)** — `[ ]` infantry `[ ]` mech `[ ]` recon
-`[ ]` tank `[ ]` artillery `[ ]` commander
+**Unit map tokens (base, neutral)** — `[x]` infantry `[x]` mech `[x]` recon
+`[x]` tank `[x]` artillery `[x]` commander  *(static base sprites, 80×80, neutral
+gray; directional/animation frames deferred to Batch 4 — smith objects retained)*
 
-**Terrain tiles** — `[ ]` plains `[ ]` road `[ ]` forest `[ ]` mountain
-`[ ]` city `[ ]` hq `[ ]` sea
+**Terrain tiles** — `[x]` plains `[x]` road `[x]` forest `[x]` mountain
+`[x]` city `[x]` hq `[x]` sea
 
 **Faction unit skins** (unique per Storm / Iron / Siege, ×6 units) — `[ ]`
 *(depends on recolor pipeline; see Batch 3)*
@@ -123,9 +124,12 @@ ROADMAP art sub-item; `GameScreen` keeps drawing rects/glyphs until that lands.
 
 | Batch | Assets | State | Notes |
 |-------|--------|-------|-------|
-| 1 (preview) | 6 unit tokens + 7 terrain tiles | staged in `art/` | quick `pixflux` pass — **colored, not colorizable**; use to lock style |
-| 1 (production) | 6 unit tokens via `pixel-sprite-smith` | pending | neutral-gray colorizable; fixes the 3 flags below |
-| 2–5 | see plan | not started | |
+| 1 (production) | 6 unit tokens (`pixel-sprite-smith`) + 7 terrain tiles | **done** — staged in `art/units/` + `art/terrain/` | neutral-gray colorizable, 80×80; commander→half-track & artillery→howitzer fixes landed; mountain re-rolled pale grey |
+| — wiring | staged PNGs → renderer | not started | use `sprite-wiring` (needs the platform image-load bridge; renderer still draws primitives) |
+| 2 | commander portraits + faction crests + UI icons | not started | |
+| 3–5 | recolor pipeline / battle scenes / terrain polish | not started | Batch 4 animates the retained smith unit objects |
+
+*(The quick `pixflux` colored preview is kept locally in `art/_preview_units/` — gitignored, used for the A/B, not shipped.)*
 
 ### Batch 1 review notes
 - **Style direction approved-in-principle**: gritty weathered olive/gunmetal reads well; infantry & tank land instantly.
