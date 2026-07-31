@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- backdrop -->
+    <path
+        android:fillColor="#10151C"
+        android:pathData="M0,0h108v108h-108z" />
+    <!-- board -->
+    <path
+        android:fillColor="#6E9A3E"
+        android:pathData="M18,18h72v72h-72z" />
+    <!-- grid lines -->
+    <path android:fillColor="#33000000" android:pathData="M42,18h2v72h-2z" />
+    <path android:fillColor="#33000000" android:pathData="M64,18h2v72h-2z" />
+    <path android:fillColor="#33000000" android:pathData="M18,42h72v2h-72z" />
+    <path android:fillColor="#33000000" android:pathData="M18,64h72v2h-72z" />
+    <!-- blue unit -->
+    <path
+        android:fillColor="#3D7DD8"
+        android:pathData="M24,68h14v14h-14z" />
+    <!-- red unit -->
+    <path
+        android:fillColor="#E5484D"
+        android:pathData="M70,26h14v14h-14z" />
+</vector>
