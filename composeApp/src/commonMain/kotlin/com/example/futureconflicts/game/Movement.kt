@@ -39,12 +39,13 @@ object Movement {
             if (cur == null) break
             settled.add(cur)
 
+            val air = unit.type.air
             for (n in map.neighbors(cur)) {
                 val terrain = map[n]
-                if (!terrain.passable) continue
+                if (!air && !terrain.passable) continue // ground can't enter sea/void; air flies over
                 val blocker = occupant(n)
-                if (blocker != null && blocker.team != unit.team) continue // enemy blocks passage
-                val next = curCost + terrain.moveCost
+                if (!air && blocker != null && blocker.team != unit.team) continue // enemies block ground, not air
+                val next = curCost + if (air) 1 else terrain.moveCost // air ignores terrain cost
                 if (next <= budget && next < (cost[n] ?: Int.MAX_VALUE)) {
                     cost[n] = next
                 }

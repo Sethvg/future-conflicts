@@ -447,5 +447,18 @@ private fun DrawScope.drawUnits(
                 ),
             )
         }
+
+        // Fuel readout (air units) — top-left, cyan; amber when low.
+        if (u.type.fuelLimited) {
+            val low = u.fuel <= Battle.FUEL_BURN_PER_TURN * 2
+            val fuelText = tm.measure(
+                AnnotatedString(u.fuel.toString()),
+                style = TextStyle(
+                    color = if (low) Palette.capture else Color(0xFF7FD7FF),
+                    fontSize = (cs * 0.24f).toSp(), fontWeight = FontWeight.Bold,
+                ),
+            )
+            drawText(fuelText, topLeft = Offset(ox + drawPos.x * cs + cs * 0.07f, oy + drawPos.y * cs + cs * 0.04f))
+        }
     }
 }

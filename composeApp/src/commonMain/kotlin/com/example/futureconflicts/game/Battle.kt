@@ -235,6 +235,7 @@ class Battle(
         val victim = unitAt(a.target) ?: return false
         if (victim.team == u.team) return false
         if (!inRangeEff(u, a.to, a.target)) return false
+        if (!Combat.canTarget(u.type, victim.type)) return false // e.g. ground units can't hit air
         u.pos = a.to
         resolveAttack(u, victim)
         finishUnit(u, null)
@@ -354,6 +355,7 @@ class Battle(
         var note = "${attacker.type.label} hits ${defender.type.label} for $dealt."
         if (defender.alive &&
             !defender.type.indirect &&
+            Combat.canTarget(defender.type, attacker.type) &&
             inRangeEff(defender, defender.pos, attacker.pos)
         ) {
             val back = damageOf(defender, attacker)
@@ -371,6 +373,29 @@ class Battle(
             players.getValue(u.team).commanderLosses++
         }
         units.removeAll { !it.alive }
+    }
+
+    /** Air units refuel on an owned Airport/HQ at turn start; otherwise they burn fuel and,
+     *  if it runs dry, crash (are lost). */
+    private fun refuelOrCrash(team: Team) {
+        val crashed = ArrayList<Unit>()
+        for (u in units) {
+            if (u.team != team || !u.type.fuelLimited) continue
+            val b = buildings[u.pos]
+            val onBase = b != null && b.owner == team &&
+                (b.kind == Building.Kind.AIRPORT || b.kind == Building.Kind.HQ)
+            if (onBase) {
+                u.fuel = u.type.maxFuel
+            } else {
+                u.fuel -= FUEL_BURN_PER_TURN
+                if (u.fuel <= 0) crashed += u
+            }
+        }
+        if (crashed.isNotEmpty()) {
+            units.removeAll(crashed)
+            message = "${team.label} lost ${crashed.size} aircraft to fuel exhaustion."
+            checkVictory() // a fuel crash can eliminate a side's last unit
+        }
     }
 
     private fun finishUnit(u: Unit, msg: String?) {
@@ -470,8 +495,10 @@ class Battle(
         previewPos = dest
         reachable = emptyMap()
         targets = if (u.type.indirect && dest != u.pos) emptySet()
-        else units.filter { it.alive && it.team != u.team && inRangeEff(u, dest, it.pos) }
-            .map { it.pos }.toSet()
+        else units.filter {
+            it.alive && it.team != u.team && inRangeEff(u, dest, it.pos) &&
+                Combat.canTarget(u.type, it.type)
+        }.map { it.pos }.toSet()
         canCaptureHere = u.type.canCapture && buildings[dest]?.let { it.owner != u.team } == true
         phase = Phase.ACTION
         message = "Choose an action."
@@ -535,6 +562,7 @@ class Battle(
         val base = buildings.values.filter { it.owner == team }.sumOf { it.incomePerTurn }
         players.getValue(team).gold += base + base * passive(team, PassiveKind.INCOME) / 100
         units.filter { it.team == team }.forEach { it.hasActed = false }
+        refuelOrCrash(team)
         clearSelection()
         // Every INTERVAL turns a side takes, it receives a seeded supply drop.
         if (turnsTaken.getValue(team) % Supply.INTERVAL == 0) {
@@ -563,6 +591,7 @@ class Battle(
             if (u.type.indirect && tile != u.pos) continue
             for (victim in units.filter { it.alive && it.team == Team.PLAYER }) {
                 if (!inRangeEff(u, tile, victim.pos)) continue
+                if (!Combat.canTarget(u.type, victim.type)) continue
                 val saved = u.pos
                 u.pos = tile
                 val dmg = damageOf(u, victim)
@@ -614,5 +643,8 @@ class Battle(
     companion object {
         /** Default supply-drop RNG seed; a fixed value keeps the shipped game reproducible. */
         const val DEFAULT_SEED = 0x5EED_1234L
+
+        /** Fuel an airborne unit burns each of its turns when not refuelling at base. */
+        const val FUEL_BURN_PER_TURN = 2
     }
 }

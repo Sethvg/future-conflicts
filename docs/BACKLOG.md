@@ -19,6 +19,9 @@ Tags: `[ai]` `[ux]` `[fog]` `[econ]` `[arch]` `[art]` `[balance]` `[test]`.
 ## Game feel / UX
 - `[ux]` **Enemy turn resolves instantly** — no animation or step-through; hard to
   follow what the Red Army did. Animate moves/attacks (or a per-action log).
+- `[ux]` **Fuel-crash / air-loss messages get clobbered** by the day / supply-drop /
+  "Red Army finished its turn" message, so the player may never see aircraft they lost
+  to fuel exhaustion. Accumulate turn events instead of overwriting `message`.
 - `[ux]` **No damage preview** before committing an attack (show predicted dmg +
   counter when a target is highlighted).
 - `[ux]` **No undo of a committed move** — Cancel only works before choosing the

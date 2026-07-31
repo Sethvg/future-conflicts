@@ -36,7 +36,7 @@ class Scenario(
 object Scenarios {
 
     private val TWIN_RIDGES_ROWS = listOf(
-        ".BH.Y..mm.",
+        "ABH.Y..mm.",
         ".c..ff..m.",
         "...ff.....",
         "ss......c.",
@@ -47,7 +47,7 @@ object Scenarios {
         ".c...m...s",
         "....ff..ss",
         ".mm....c..",
-        "....Y.HB..",
+        "....Y.HBA.",
     )
 
     private fun terrainOf(c: Char): Terrain = when (c) {
@@ -55,7 +55,7 @@ object Scenarios {
         '-' -> Terrain.ROAD
         'f' -> Terrain.FOREST
         'm' -> Terrain.MOUNTAIN
-        'c', 'B', 'Y' -> Terrain.CITY // production buildings stand on urban tiles
+        'c', 'B', 'Y', 'A' -> Terrain.CITY // production buildings stand on urban tiles
         's' -> Terrain.SEA
         'H' -> Terrain.HQ
         else -> Terrain.PLAINS
@@ -79,6 +79,7 @@ object Scenarios {
                         'c' -> add(Building(Pos(x, y), Building.Kind.CITY, owner = null))
                         'B' -> add(Building(Pos(x, y), Building.Kind.BARRACKS, owner = side))
                         'Y' -> add(Building(Pos(x, y), Building.Kind.FACTORY, owner = side))
+                        'A' -> add(Building(Pos(x, y), Building.Kind.AIRPORT, owner = side))
                     }
                 }
             }
