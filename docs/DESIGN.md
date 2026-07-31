@@ -44,8 +44,13 @@ HP is 0–10 (shown on the unit when damaged).
 | Recon     | 8    | 1     | 5      | 4000   | no       | fast scout, shreds infantry, dies to tanks |
 | Tank      | 6    | 1     | 3      | 7000   | no       | strong all-rounder                     |
 | Artillery | 5    | 2–3   | 2      | 6000   | no       | indirect; big damage, can't move & fire |
+| Anti-Air  | 6    | 1     | 3      | 8000   | no       | shreds aircraft & infantry, weak vs armor |
+| Gunship   | 7    | 1     | 3      | 9000   | no       | **flies** (fuel); strong vs ground; only anti-air hits it |
 | Commander | 6    | 1     | 4      | 16000  | no       | hero unit; strong; one per player      |
 
+- **Movement classes:** ground (terrain-bound), **air** (ignores terrain cost, flies over
+  units and water, only hit by anti-air), naval (later). Air units carry **fuel** — they
+  burn it each turn, refuel on an owned **Airport**/HQ, and **crash** at zero.
 - **Elite** units are a Commander's *signature chassis* built at 2× cost with
   +1 move / +20% firepower / +10% armor (marked with a gold outline).
 - **Commander** hero unit: one per player. If it dies, its **rebuy cost multiplies**

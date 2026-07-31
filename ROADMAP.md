@@ -7,6 +7,9 @@ of "Done".
 
 ## Done
 
+- **Slice 2 — air layer + fuel.** MoveClass (ground/air/naval); aircraft ignore terrain,
+  fly over units/water; Gunship (Airport) + Anti-Air (Factory); air immunity via explicit
+  `hitsAir`; fuel burn/refuel-at-base/crash; symmetric airports on Twin Ridges. 74 tests.
 - **Slice 1 — distributed production.** Units build from captured category buildings
   (Barracks/Factory; HQ doubles as a Barracks); category-gated `execBuild`, per-building
   build menu, capture = build-access-only, Twin Ridges seeded with production buildings.
@@ -53,10 +56,18 @@ AdMob edits so we don't collide on `GameScreen.kt`.
 - Place the new buildings on Twin Ridges (each side starts with Barracks+Factory;
   Airport/Port/Drone Command/Oil Well are contested). Keep the current units working.
 
-### 2. Air layer + Anti-Air *(current focus — introduces the air movement class + fuel)*
+### 2. Air layer + Anti-Air — ✅ done (30f4b76)
 - Movement classes: ground/naval/**air** (flyers ignore terrain cost, can't capture).
 - **Fuel** attribute (debuts on air): burns per turn, refuel at owned Airport/base,
   crash at 0. **Gunship** + **Anti-Air** (the hard counter). Built from Airport/Factory.
+
+### 2.5 Core modularization *(current focus)*
+- Split the monolithic `Battle.kt` into cohesive files — turn flow, production, combat
+  resolution, enemy AI, interaction, the commander stat pipeline — so the core supports
+  **maintenance, parallel workstreams, and focused testing**. Behaviour-neutral: all host
+  tests stay green. Update [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) with the module map.
+  (Evaluate extracting a compose-free `:core` Gradle module too.)
+- **Standing rule from here on:** keep files cohesive and small — no new monolith.
 
 ### 3. Drone Command *(signature mechanic)*
 - Building maintains up to **N persistent scout drones** (N = level, free of gold) that
