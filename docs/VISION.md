@@ -84,7 +84,8 @@ helo). Naval brings ships — **lander** (amphibious transport), **destroyer** (
 / anti-air / anti-sub), **battleship** (long-range coastal bombardment), **submarine**
 (stealth that leans on fog). **Fuel:** air units (and, later, naval) carry fuel and must
 refuel at base or they're lost — the mechanic debuts with the drone flight below.
-*Open: exact ship roster; coastal (ship↔land) combat rules.*
+**Every map ships with water**, so naval units and oil wells always matter — there are
+no landlocked scenarios. *Open: exact ship roster; coastal (ship↔land) combat rules.*
 
 ## Sea economy: oil wells
 
@@ -112,6 +113,28 @@ so their limits are logistical, not economic:
 
 A persistent, self-replenishing AI **recon** flight balanced by fuel + downtime rather
 than cost. Distinct from Advance Wars; it deepens the fog game.
+
+## Factions — the five doctrines *(target roster)*
+
+Five Commanders, one per flavor axis. Each shares the core roster but leans hard via its
+**3 passives**, a **signature Elite**, a **home-category specialization** (a discount/buff
+where it builds best), and **one exclusive unit** only it can field. All five stay viable
+because **every map includes water**.
+
+| Faction (Commander) | Doctrine | 3 passives | Home / Elite | Exclusive |
+|---|---|---|---|---|
+| **Storm Vanguard** (Vale) | air cavalry, speed | +1 Move · +10% Firepower · +1 Vision | Airport / Gunship | **Interceptor** (air-superiority) |
+| **Iron Column** (Krause) | armor attrition | +15% Armor · +10% Firepower · −10% Cost | Factory / Heavy Tank | **Heavy Tank "Breaker"** |
+| **Siege Marshal** (Okonkwo) | indirect + economy | +1 Range · +20% Income · +5% Armor | Indirect / Rockets | **MLRS / Rocket Battery** |
+| **Tide Command** (Reyes) | sea power | cheaper ships · +naval mobility · +oil-well income | Port / Destroyer | **Submarine** (fog-stealth) |
+| **Signal Command** (Vega) | drones / recon / info-war | +Vision · +1 Drone · +Fuel-efficiency | Drone Command / Recon | **Stealth Infiltrator** *(or early drone-strike)* |
+
+**New passive kinds** beyond MOVE / RANGE / FIREPOWER / ARMOR / INCOME / DISCOUNT:
+**VISION**, **FUEL** (efficiency), **DRONES** (+flight size); the home specialization is a
+domain-scoped discount. (Exact enum settled in implementation.)
+
+**Balance guards:** exclusives are identity pieces, not auto-wins, and the shared core
+roster keeps every faction playable in every domain.
 
 ## Economy
 
