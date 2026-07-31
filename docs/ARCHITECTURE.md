@@ -29,6 +29,26 @@ enforces the "core stays pure" rule at the build level, speeds up core tests
 headless server/AI. Do this during the economy refactor, when the core gains
 enough surface to justify it. Until then, the package boundary is the contract.
 
+### Core file layout — `game/` (split by concern, not one monolith)
+
+Cohesive files so features can be worked on in parallel and tested in isolation:
+
+- **Model / Terrain / Units / GameMap** — value types; the unit roster (with move class,
+  fuel, `hitsAir`); terrain; maps & scenarios.
+- **Combat / Movement / Vision** — damage table + targeting, Dijkstra reach, fog view.
+- **Economy / Commander / Supply / Action** — buildings & income, factions + passives,
+  seeded supply drops, the serializable command set.
+- **`Battle`** holds the **state + public API + the `apply(Action)` funnel**. Its
+  implementation is split into **`internal` extension files on `Battle`** (state is
+  `internal` so they can reach it): **`BattleStats`** (derived stats & reach),
+  **`BattleActions`** (action executors, combat resolution, victory), **`BattleTurn`**
+  (turn lifecycle & fuel), **`BattleAI`** (enemy planner), **`BattleInteraction`** (tap
+  handling). One class, cohesive files.
+
+**Rule of thumb:** when a `Battle*` (or any core) file outgrows its concern, split it —
+keep files small and single-purpose. New slices add a new `Battle<Concern>.kt` rather
+than growing `Battle.kt`.
+
 ## The one-way dependency rule
 
 ```
