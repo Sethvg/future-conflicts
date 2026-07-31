@@ -26,10 +26,16 @@ export JAVA_HOME="/home/kalieki/Downloads/android-studio-quail3-linux/android-st
 export PATH="$JAVA_HOME/bin:$PATH"
 ./gradlew :androidApp:assembleDebug     # build the Android debug APK
 ./gradlew :androidApp:installDebug      # build + install on a device/emulator
+./gradlew :composeApp:jvmTest           # run the core's host unit tests (no device)
 ```
 
 iOS is wired up (`iosApp/`, shared framework `ComposeApp`) but must be built on a
 Mac with Xcode.
 
-See [DESIGN.md](DESIGN.md) for the game design and [ROADMAP.md](ROADMAP.md) for
-what's done and what's next.
+## Docs
+
+- [docs/VISION.md](docs/VISION.md) — the north star: full game vision, art
+  direction, systems, multiplayer plan. **Start here.**
+- [docs/DESIGN.md](docs/DESIGN.md) — current, implemented mechanics.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — code layout + conventions for scale.
+- [ROADMAP.md](ROADMAP.md) — what's done and the ordered plan.

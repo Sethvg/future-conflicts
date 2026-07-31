@@ -21,6 +21,10 @@ kotlin {
         }
     }
 
+    // JVM target used purely for fast, host-runnable unit tests of the game core
+    // (no device/emulator needed). The app ships from androidLibrary + iOS.
+    jvm()
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -38,6 +42,9 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
     }
 }

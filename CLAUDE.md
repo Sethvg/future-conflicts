@@ -9,7 +9,11 @@ grid battles between the Blue Army and the Red Army. It's built with **Kotlin
 Multiplatform + Compose Multiplatform** so the same code targets **Android now and
 iOS later**. Sibling project to `stroads` (same toolchain and module structure).
 
-Read [DESIGN.md](DESIGN.md) for the game, [ROADMAP.md](ROADMAP.md) for what's next.
+Read [docs/VISION.md](docs/VISION.md) for the north-star design (Commanders,
+economy, fog, art direction, multiplayer plan), [docs/DESIGN.md](docs/DESIGN.md)
+for current mechanics, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for code
+conventions, and [ROADMAP.md](ROADMAP.md) for the ordered plan (economy & HQ
+purchasing is next).
 
 ## Architecture
 
@@ -47,7 +51,13 @@ export PATH="$JAVA_HOME/bin:$PATH"
 ```bash
 ./gradlew :androidApp:assembleDebug   # build debug APK
 ./gradlew :androidApp:installDebug    # build + install on a device/emulator
+./gradlew :composeApp:jvmTest         # host unit tests for game/ (no device needed)
 ```
+
+**Tests** live in `composeApp/src/commonTest/.../game/` and run on the `jvm()`
+target — pure-Kotlin, fast, device-free. The `jvm()` target exists *only* for
+testing; the app ships from `androidLibrary` + iOS. Keep the core covered as it
+grows (`TestSupport.kt` has helpers for building small deterministic scenarios).
 
 **Gotcha:** don't pipe gradle into `tail`/`head` when you need the result — the
 shell reports the pager's exit code, not gradle's. Redirect to a file and check

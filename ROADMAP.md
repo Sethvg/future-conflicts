@@ -1,40 +1,63 @@
 # Future Conflicts — Roadmap
 
+The ordered plan. North star: [docs/VISION.md](docs/VISION.md). Current mechanics:
+[docs/DESIGN.md](docs/DESIGN.md). Code conventions: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Tracked in plain git (like the sibling `stroads` project). Newest work at the top
 of "Done".
 
-## Done — vertical slice (playable)
+## Done
 
-- KMP + Compose Multiplatform scaffold on the AGP 9.3.1 / Kotlin 2.2.10 toolchain
-  (two-module split: `androidApp` + shared `composeApp`; iOS targets wired).
-- Pure-Kotlin tactics core (`game/`), no Compose/platform imports:
-  - Terrain with move cost + defense; hand-authored "Twin Ridges" map.
-  - 5 unit types (Infantry, Mech, Recon, Tank, Artillery) with stats + a full
-    damage matchup table; Advance-Wars-style damage & counterattack math.
-  - Dijkstra movement range; select → move → attack/wait turn flow.
-  - Greedy enemy AI; win/lose on army elimination; Restart.
-- Compose `Canvas` renderer + tap input, End Turn / Restart buttons, HUD.
-- Builds a debug APK (`./gradlew :androidApp:assembleDebug`).
+- **Foundation & tests.** `jvm()` host-test target; 22 passing tests
+  (`./gradlew :composeApp:jvmTest`) covering combat math, movement/blocking,
+  turn flow, victory, and enemy AI. High-level docs (Vision/Design/Architecture).
+- **Vertical slice (playable, on device).** KMP + Compose Multiplatform scaffold;
+  pure-Kotlin tactics core (terrain, 5 unit types, AW-style damage + counters,
+  Dijkstra movement, select→move→attack flow, greedy enemy AI, win-on-elimination,
+  Restart); Compose Canvas renderer + tap input.
 
-## Next
+## Next — sequenced
 
-1. **Host unit tests** for the core (`commonTest` + kotlin.test): damage math,
-   movement blocking, counterattack rules, victory detection.
-2. **Enemy-turn feedback** — animate/step enemy actions instead of resolving them
-   instantly; brief attack flashes.
-3. **Bases & economy** — capturable Cities/HQ, funds per turn, unit production;
-   **capture the HQ** as an alternate win condition.
-4. **Post-move Wait/Attack menu** (explicit) + a **Cancel** to undo a move before
-   committing an action.
-5. **Fog of war** and vision per unit.
-6. **Content** — more maps, a map format/loader, and PixelLab sprite art for units
-   and terrain tiles (see the PixelLab MCP; used on `stroads`).
-7. **Commanders (COs)** with passive buffs and a power meter.
+### 1. Economy & HQ purchasing *(current focus)*
+- Refactor toward **Actions as data** + a **seeded RNG** in game state (see
+  ARCHITECTURE.md "Target architecture") — do this here, before piling on features.
+- Gold per player; **cities** produce income; **city upgrades** (gold → +income/level);
+  **razing a city resets it to level 1**.
+- **HQ production menu:** buy Basic units, Elite/unique units, and the Commander,
+  priced by power. Spawn on/adjacent to HQ.
+- **Capture** mechanic (infantry captures cities/HQ) + **capture-the-HQ** win
+  condition.
+- Tests: income accrual, upgrade/raze, purchase affordability & spawning, capture,
+  HQ-capture victory.
 
-## Known simplifications (slice)
+### 2. Commanders & factions
+- Commander data model: themed roster + **3 army-wide passive traits** (data-driven
+  stat pipeline). Elite unit variants per faction.
+- Recolorable skins (team-color mask) — art wiring comes with the art pass.
+- Tests: passive stacking onto effective stats; per-faction rosters.
 
-- Enemy turn resolves instantly (no animation).
-- No production/economy yet; armies are pre-placed.
-- One built-in map; no loader.
-- Terrain move cost is uniform across unit types (no treads-vs-tires movement
-  tables yet).
+### 3. Fog of war + supply drops
+- Per-unit **vision**, per-player view state, hidden enemies.
+- **Every-7-turns supply drop**: seeded weighted boon (spawn / gold / reveal / heal).
+- Tests: vision reveal, fog correctness per player, deterministic drop rolls.
+
+### 4. Art pass (gritty detailed pixel art)
+- PixelLab sprites for units (per faction) + terrain tiles; **team-color mask**
+  recolor at runtime.
+- **Battle animation scenes** composed from layers (attacker + defender + backdrop).
+- Replace rect/glyph rendering with sprite draws.
+
+### 5. Game feel & polish
+- Animate/step the enemy turn; explicit Move/Attack/Wait menu + Cancel/undo;
+  damage preview before committing; attack flashes; sound.
+
+### 6. Multiplayer
+- With Actions + determinism + per-player views already in place: hot-seat first,
+  then async/live online.
+
+## Known simplifications (current)
+
+- Armies pre-placed; no economy/production yet.
+- Enemy turn resolves instantly; greedy AI.
+- One built-in map ("Twin Ridges"); no loader/editor.
+- Uniform terrain move cost across unit types (no movement classes yet).
+- Rendering is colored rects + letter glyphs (art pass pending).
