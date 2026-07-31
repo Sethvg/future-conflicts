@@ -18,6 +18,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -100,7 +101,7 @@ private fun ownerColor(team: Team?): Color = when (team) {
 }
 
 @Composable
-fun GameScreen(modifier: Modifier = Modifier) {
+fun GameScreen(modifier: Modifier = Modifier, onBattleEnd: () -> kotlin.Unit = {}) {
     val battle = remember { Battle() }
     val textMeasurer = rememberTextMeasurer()
     val sprites = remember { loadSprites() }
@@ -113,6 +114,13 @@ fun GameScreen(modifier: Modifier = Modifier) {
     var cellSize by remember { mutableStateOf(0f) }
     var originX by remember { mutableStateOf(0f) }
     var originY by remember { mutableStateOf(0f) }
+
+    // Battle-end edge detector: fires once on null -> winner set (victory OR defeat)
+    // and re-arms across restart() (which resets winner to null). Keyed on the
+    // winner value so recomposition (driven by version++) re-evaluates it.
+    LaunchedEffect(battle.winner) {
+        if (battle.winner != null) onBattleEnd()
+    }
 
     Column(modifier = modifier.fillMaxSize().background(Palette.screenBg).systemBarsPadding()) {
         @Suppress("UNUSED_EXPRESSION") version
@@ -201,30 +209,24 @@ private fun Controls(battle: Battle, version: Int, act: (() -> kotlin.Unit) -> k
             pad.verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("Build at HQ — ${battle.goldOf(Team.PLAYER)}g", color = Palette.hud, fontWeight = FontWeight.SemiBold)
             val gold = battle.goldOf(Team.PLAYER)
-            for (type in UnitType.entries.filter { it.basic }) {
-                val cost = battle.buildCost(Team.PLAYER, type, elite = false) ?: continue
-                BuildButton("${type.label} — ${cost}g", enabled = gold >= cost) {
-                    act { battle.buildUnit(type) }
+            Text("Build — ${gold}g", color = Palette.hud, fontWeight = FontWeight.SemiBold)
+            val options = battle.buildableHere()
+            if (options.isEmpty()) {
+                Text("Nothing to build here.", color = Palette.hudDim, fontSize = 12.sp)
+            }
+            for (opt in options) {
+                val cost = battle.buildCost(Team.PLAYER, opt.type, opt.elite) ?: continue
+                val hero = opt.type == UnitType.COMMANDER
+                val label = when {
+                    hero -> "★ Commander — ${cost}g"
+                    opt.elite -> "★ Elite ${opt.type.label} — ${cost}g"
+                    else -> "${opt.type.label} — ${cost}g"
+                }
+                BuildButton(label, enabled = gold >= cost, elite = opt.elite || hero) {
+                    act { battle.buildUnit(opt.type, elite = opt.elite) }
                 }
             }
-            // Elite signature unit.
-            battle.commanderOf(Team.PLAYER)?.signature?.let { sig ->
-                val cost = battle.buildCost(Team.PLAYER, sig, elite = true)
-                if (cost != null) BuildButton("★ Elite ${sig.label} — ${cost}g", enabled = gold >= cost, elite = true) {
-                    act { battle.buildUnit(sig, elite = true) }
-                }
-            }
-            // Commander hero unit.
-            val cCost = battle.commanderPrice(Team.PLAYER)
-            val has = battle.hasCommander(Team.PLAYER)
-            BuildButton(
-                if (has) "Commander (deployed)" else "★ Commander — ${cCost}g",
-                enabled = !has && gold >= cCost,
-                elite = true,
-            ) { act { battle.buildUnit(UnitType.COMMANDER) } }
-
             OutlinedButton(onClick = { act { battle.dismissMenus() } }, modifier = Modifier.fillMaxWidth()) {
                 Text("Close")
             }
@@ -332,8 +334,16 @@ private fun DrawScope.drawBuildings(battle: Battle, cs: Float, ox: Float, oy: Fl
             size = Size(cs * 0.88f, cs * 0.88f),
             style = Stroke(width = cs * 0.08f),
         )
-        // Label: "HQ" or city level.
-        val label = if (b.kind == Building.Kind.HQ) "HQ" else "L${b.level}"
+        // Label: HQ / production kind / city level.
+        val label = when (b.kind) {
+            Building.Kind.HQ -> "HQ"
+            Building.Kind.BARRACKS -> "BRK"
+            Building.Kind.FACTORY -> "FAC"
+            Building.Kind.AIRPORT -> "AIR"
+            Building.Kind.PORT -> "PRT"
+            Building.Kind.DRONE_COMMAND -> "DRN"
+            Building.Kind.CITY -> "L${b.level}"
+        }
         val layout = tm.measure(
             AnnotatedString(label),
             style = TextStyle(color = Color.Black, fontSize = (cs * 0.22f).toSp(), fontWeight = FontWeight.Bold),
