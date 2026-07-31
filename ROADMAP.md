@@ -7,6 +7,9 @@ of "Done".
 
 ## Done
 
+- **Art — Batch 1 (units + terrain), wired.** 6 neutral-gray colorizable unit tokens +
+  7 terrain tiles via the `pixel-sprite-smith` pipeline, drawn in `GameScreen.kt`
+  (base64-embedded + `expect/actual` decode; team-tinted). Batches 2+ in [docs/ART.md](docs/ART.md).
 - **Supply drops.** Seeded RNG in game state; every 7 turns a side takes, a weighted
   boon (gold windfall / reinforcements / field repairs / recon sweep) emitted as a
   serializable `Action.SupplyDrop(team, kind)` so recorded matches replay without the RNG.
@@ -31,20 +34,51 @@ of "Done".
 
 ## Next — sequenced
 
-### 1. Art pass (gritty detailed pixel art) *(current focus)*
-- PixelLab sprites for units (per faction) + terrain tiles; **team-color mask**
-  recolor at runtime. Produced via the `pixel-sprite-smith` agent **in batches**,
-  tracked in [docs/ART.md](docs/ART.md). Batch 1 (units + terrain) is staged in `art/`.
-- **Battle animation scenes** composed from layers (attacker + defender + backdrop).
-- Wire staged PNGs into the renderer (needs a platform image-load bridge — see ART.md).
+The big arc: distributed production → air + drones → naval → sea economy. Each slice
+ships playable + host-tested. Art (Batch 2+) and game-feel polish run as a **parallel
+track** ([docs/ART.md](docs/ART.md)); the renderer-touching steps are timed around the
+AdMob edits so we don't collide on `GameScreen.kt`.
 
-### 2. Game feel & polish
-- Animate/step the enemy turn; explicit Move/Attack/Wait menu + Cancel/undo;
-  damage preview before committing; attack flashes; sound.
+### 1. Production-building overhaul *(foundational — everything below needs it)*
+- Generalize `Building` into production kinds: **Barracks** (infantry), **Factory**
+  (vehicles), **Airport** (aircraft), **Port** (ships), plus income (City, Oil Well) and
+  the HQ. Capturable like cities.
+- Move `Action.Build` off the HQ: you build a category from an owned building of the
+  matching kind. Build menu opens on tapping that building. HQ keeps income + Commander
+  purchase + capture-to-win.
+- Place the new buildings on Twin Ridges (each side starts with Barracks+Factory;
+  Airport/Port/Drone Command/Oil Well are contested). Keep the current units working.
 
-### 3. Multiplayer
-- With Actions + determinism + per-player views already in place: hot-seat first,
-  then async/live online.
+### 2. Air layer + Anti-Air *(introduces the air movement class + fuel)*
+- Movement classes: ground/naval/**air** (flyers ignore terrain cost, can't capture).
+- **Fuel** attribute (debuts on air): burns per turn, refuel at owned Airport/base,
+  crash at 0. **Gunship** + **Anti-Air** (the hard counter). Built from Airport/Factory.
+
+### 3. Drone Command *(signature mechanic)*
+- Building maintains up to **N persistent scout drones** (N = level, free of gold) that
+  the AI flies **autonomously before the player's turn** to **reveal fog**, refuelling at
+  base (fuel); crash if dry. A downed drone → **long build cooldown** before replacement.
+- Reuse the enemy-AI planner for the autonomous recon phase. *Future: strike upgrade.*
+
+### 4. Naval + Port *(the sea domain)*
+- `SEA` becomes navigable for ships; **Lander** (amphibious transport), **Destroyer**,
+  **Battleship** (coastal bombardment), **Submarine** (fog-stealth). Port builds/repairs.
+- Amphibious transport (load/unload across the land↔sea boundary).
+
+### 5. Oil wells *(sea economy)*
+- Capturable offshore income platforms on `SEA`, upgradeable like cities; captured by a
+  **ship occupying** them (MVP). Holding the sea pays.
+
+### 6. Fill-ins & tiers
+- Fighter/Bomber, Heavy Tank, Rockets (indirect tier-2), APC land transport; Elite
+  signature variants per production building.
+
+### 7. Game feel & polish
+- Step/animate the enemy (and drone) turn; damage preview; attack flashes; sound;
+  proper end screen.
+
+### 8. Multiplayer
+- With Actions + determinism + per-player views in place: hot-seat first, then online.
 
 ## Polish, tech debt & known simplifications
 

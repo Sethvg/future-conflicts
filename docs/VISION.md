@@ -59,26 +59,32 @@ Win by eliminating the enemy army **or** capturing their HQ.
   **team-color tint/mask** so the engine recolors the same art to any player color at
   runtime (blue vs red today). Color is a runtime parameter (see ARCHITECTURE.md).
 
-## Unit tiers (bought from HQ)
+## Production: capture your industry
 
-Priced by power, low → high:
-1. **Basic** — the standard roster (Infantry, Mech, Recon, Tank, Artillery, …).
-2. **Elite / unique** — faction-flavored upgraded variants (e.g. a Commander's
-   signature infantry): stronger than basic, cheaper than the Commander.
-3. **Commander** — the hero unit; the most expensive purchase.
+Units are built from **category-specific production buildings** you own — each
+capturable like a city, so **map control is your build order**:
+- **Barracks** → infantry (the foot units that capture)
+- **Factory** → vehicles (recon, tank, artillery, anti-air, APC…)
+- **Airport** → aircraft (gunship, fighter, bomber…)
+- **Port** → ships (lander, destroyer, battleship, submarine)
+- **Drone Command** → an autonomous drone flight (special — see below)
 
-Pricing scales with capability (e.g. a helicopter-class unit costs more than a
-ground unit; the Commander tops the chart).
+The **HQ** is income + the capture-to-win seat, and where you buy your **Commander**.
+Lose a production building and that whole category goes dark until you retake one.
 
-## Domains: land, air & sea *(direction — details in flight)*
+Within a category, tiers price by power: **Basic** → **Elite/signature** (faction
+variant: stronger, pricier) → **Commander** (the hero, top of the chart).
+
+## Domains: land, air & sea *(direction)*
 
 The battlefield spans **three movement classes**: **ground** (land only), **naval**
 (sea only), and **air** (moves anywhere, ignores terrain cost, can't capture, hard-
-countered by anti-air). Crossing between land and sea needs a transport (lander /
-transport helo). Naval brings ships — e.g. **lander** (amphibious transport),
-**destroyer** (anti-ship / anti-air / anti-sub), **battleship** (long-range coastal
-bombardment), **submarine** (stealth that leans on fog). *Open: a port building for
-naval build/repair; the exact ship roster; coastal (ship↔land) combat rules.*
+countered by anti-air). Crossing land↔sea needs a transport (**lander** / transport
+helo). Naval brings ships — **lander** (amphibious transport), **destroyer** (anti-ship
+/ anti-air / anti-sub), **battleship** (long-range coastal bombardment), **submarine**
+(stealth that leans on fog). **Fuel:** air units (and, later, naval) carry fuel and must
+refuel at base or they're lost — the mechanic debuts with the drone flight below.
+*Open: exact ship roster; coastal (ship↔land) combat rules.*
 
 ## Sea economy: oil wells *(direction)*
 
@@ -88,16 +94,23 @@ can't stand on water, they're seized by a **naval unit occupying them** (or mari
 delivered by a lander). Holding the sea now *pays*, giving a reason to contest it.
 *Open: capture method (ship-occupies vs delivered infantry); upgrade curve.*
 
-## Drone Command *(direction — signature mechanic)*
+## Drone Command *(signature mechanic)*
 
-A capturable, upgradeable building that fields an **autonomous drone swarm**: at the
-start of the owner's turn it launches **N attack aircraft (N = its level)** that act
-**automatically, before** the owner takes manual control — the AI flies them at and
-strikes the best targets. The swarm is **disposable** (a fresh N each turn), scales
-with level (gold to upgrade), and is hard-countered by **anti-air**, so it carries its
-own rock-paper-scissors. Distinct from Advance Wars; echoes the autonomous-ally idea.
-*Open: persistent vs disposable; drone behavior (strike / scout / kamikaze); capture-
-only vs also buildable.*
+A capturable, upgradeable building that fields an **autonomous scout-drone flight** —
+up to **N persistent drones (N = its level)** that the AI flies **automatically, before**
+the owner takes manual control. Their job (for now) is **reconnaissance**: fan out to
+**reveal fog** ahead of your army, then return to base. Drones are **free** (no gold),
+so their limits are logistical, not economic:
+- **Fuel:** they burn fuel operating and must **return to the Drone Command to refuel**;
+  run dry and they crash (lost).
+- **Death cooldown:** a downed/crashed drone leaves its slot empty for a **long cooldown**
+  before a replacement is built — free-ness paid for in downtime.
+- **Countered by anti-air**, giving the air/drone layer a clean counter.
+- **Future upgrade — strike package:** drones gain a weapon, turning the recon flight
+  into an offensive one.
+
+A persistent, self-replenishing AI **recon** flight balanced by fuel + downtime rather
+than cost. Distinct from Advance Wars; it deepens the fog game.
 
 ## Economy
 
