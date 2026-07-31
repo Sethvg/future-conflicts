@@ -73,10 +73,13 @@ gray; directional/animation frames deferred to Batch 4 — smith objects retaine
 **Terrain tiles** — `[x]` plains `[x]` road `[x]` forest `[x]` mountain
 `[x]` city `[x]` hq `[x]` sea
 
-**Faction unit skins** (unique per Storm / Iron / Siege, ×6 units) — `[ ]`
-*(depends on recolor pipeline; see Batch 3)*
+**Team recolor** — `[x]` blue (player) / red (enemy) via runtime team-color tint
+(`ColorFilter.tint`, Modulate) on the shared neutral-gray tokens.
 
-**Team recolor** — blue (player) / red (enemy) via team-color mask — `[ ]`
+> **Art-direction rule:** the **top-down token is the SAME across all factions** —
+> one shared token per unit type, team-recolored. There are **no per-faction top-down
+> skins**. Faction identity shows only in the **battle-animation scenes** (slight
+> per-faction variation) and Commander portraits.
 
 **Commander portraits** — `[ ]` Vale (Storm) `[ ]` Krause (Iron) `[ ]` Okonkwo (Siege)
 
@@ -97,13 +100,13 @@ gray; directional/animation frames deferred to Batch 4 — smith objects retaine
 Each batch is a self-contained agent job: generate with the locked presets, poll
 to completion, `curl` the download URL into `art/…`, write a `manifest.md`.
 
-- **Batch 1 — Style-defining first pass** *(in progress)*: 6 base unit tokens +
-  7 terrain tiles, neutral palette. Goal: lock the look before scaling up.
+- **Batch 1 — Style-defining first pass** *(done, wired)*: base unit tokens +
+  7 terrain tiles, neutral palette, team-tinted at draw time.
 - **Batch 2 — Identity**: 3 commander portraits + 3 faction crests + core UI icons.
-- **Batch 3 — Recolor pipeline**: decide mask-vs-per-color; produce blue/red team
-  variants + per-faction unit skins.
+- **Batch 3 — New units**: top-down tokens for any units added from the roster
+  brainstorm (same shared-token rule — one neutral token per type).
 - **Batch 4 — Battle scenes**: attacker/defender sprites + terrain backdrops for the
-  composed attack animation.
+  composed attack animation. **This is where per-faction variation lives.**
 - **Batch 5 — Terrain polish & FX**: seamless Wang tilesets, city levels, owner
   tints, explosion/capture FX.
 

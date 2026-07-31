@@ -51,11 +51,13 @@ Win by eliminating the enemy army **or** capturing their HQ.
   capture speed. Passives are **data**, stacked additively onto base stats.
 - The **Commander is also a unit** you purchase from HQ — powerful, expensive,
   one per player. Losing it should hurt (morale/penalty TBD) but not auto-lose.
-- **Skins:** each army has unique sprites — *similar silhouettes, distinct detailing*
-  so units stay readable across factions.
-- **Any Commander, any color:** sprites are authored with a **team-color mask** so
-  the engine can recolor the same art to any player color at runtime. Art is
-  authored once per faction; color is a runtime parameter (see ARCHITECTURE.md).
+- **Top-down tokens are consistent:** the map representation of a unit is the **same
+  across all factions** — one shared token per unit type — so the board stays readable.
+  Faction identity shows in the **battle-animation scenes** (slight variations) and
+  Commander portraits, *not* in the top-down token.
+- **Any Commander, any color:** tokens are authored **neutral/desaturated** with a
+  **team-color tint/mask** so the engine recolors the same art to any player color at
+  runtime (blue vs red today). Color is a runtime parameter (see ARCHITECTURE.md).
 
 ## Unit tiers (bought from HQ)
 
@@ -67,6 +69,35 @@ Priced by power, low → high:
 
 Pricing scales with capability (e.g. a helicopter-class unit costs more than a
 ground unit; the Commander tops the chart).
+
+## Domains: land, air & sea *(direction — details in flight)*
+
+The battlefield spans **three movement classes**: **ground** (land only), **naval**
+(sea only), and **air** (moves anywhere, ignores terrain cost, can't capture, hard-
+countered by anti-air). Crossing between land and sea needs a transport (lander /
+transport helo). Naval brings ships — e.g. **lander** (amphibious transport),
+**destroyer** (anti-ship / anti-air / anti-sub), **battleship** (long-range coastal
+bombardment), **submarine** (stealth that leans on fog). *Open: a port building for
+naval build/repair; the exact ship roster; coastal (ship↔land) combat rules.*
+
+## Sea economy: oil wells *(direction)*
+
+**Oil wells are cities on water** — capturable offshore platforms on `SEA` tiles that
+generate gold/turn and upgrade like cities (razed to L1 on capture). Since foot units
+can't stand on water, they're seized by a **naval unit occupying them** (or marines
+delivered by a lander). Holding the sea now *pays*, giving a reason to contest it.
+*Open: capture method (ship-occupies vs delivered infantry); upgrade curve.*
+
+## Drone Command *(direction — signature mechanic)*
+
+A capturable, upgradeable building that fields an **autonomous drone swarm**: at the
+start of the owner's turn it launches **N attack aircraft (N = its level)** that act
+**automatically, before** the owner takes manual control — the AI flies them at and
+strikes the best targets. The swarm is **disposable** (a fresh N each turn), scales
+with level (gold to upgrade), and is hard-countered by **anti-air**, so it carries its
+own rock-paper-scissors. Distinct from Advance Wars; echoes the autonomous-ally idea.
+*Open: persistent vs disposable; drone behavior (strike / scout / kamikaze); capture-
+only vs also buildable.*
 
 ## Economy
 
@@ -107,12 +138,13 @@ military palette. Rationale over photorealism: **readability at tile size**,
 **clean recoloring**, **feasible animation**, and it plays to our **PixelLab**
 pipeline.
 
-- **Recoloring:** author each sprite with a defined base palette + a **team-color
-  ramp/mask** the engine swaps. One art set per faction, any player color.
+- **Recoloring:** author each top-down token **once** (neutral gray) + a **team-color
+  tint/mask** the engine applies at draw time — one shared token set, any player color.
 - **Battle animations — compose, don't multiply:** the battle scene is layered —
   *attacker animation + defender animation + terrain backdrop* — each authored
   independently. Cost is **additive (N + M)**, not every-pair (N × M). This keeps
-  "an animation for every matchup" tractable.
+  "an animation for every matchup" tractable. **Faction flavor lives here** — slight
+  per-faction variations in the attacker/defender art, while the top-down token stays shared.
 - **Where realism lives:** push detail/realism into **terrain and battle
   backdrops**; keep **units** stylized-but-detailed so silhouettes read.
 - **Pipeline:** generate via the PixelLab MCP (`mcp__pixellab__*`); keep raw
