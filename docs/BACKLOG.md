@@ -42,6 +42,17 @@ Tags: `[ai]` `[ux]` `[fog]` `[econ]` `[arch]` `[art]` `[balance]` `[test]`.
   (AW resets it). Track the capturer and reset `captureLeft` on interruption.
 - `[econ]` No save/serialize of game state; needed for persistence + net sync.
 
+## Supply drops
+- `[ux]` The **enemy's** supply-drop message is immediately overwritten by "Red Army
+  finished its turn." — the player never sees when the AI got a drop.
+- `[ux]` No supply-drop toast / animation / sound; only the HUD message + `lastSupplyKind`.
+- `[fog]` A REVEAL boon stays active until that side's *next* turn (~1.5 turns of map
+  reveal) rather than expiring at end of the current turn.
+- `[ai]` The AI doesn't factor its own supply cadence into planning (e.g. timing a push
+  to line up with a reinforcement drop).
+- `[arch]` The supply RNG **state** isn't serialized — only the seed. Replay relies on
+  re-applying the recorded `Action.SupplyDrop`s in order (fine until live netcode).
+
 ## Architecture
 - `[arch]` **Extract a compose-free `:core` module** for the game logic (currently
   in `composeApp/.../game/`). Enforces the "core stays pure" rule at build level and
@@ -66,6 +77,8 @@ Tags: `[ai]` `[ux]` `[fog]` `[econ]` `[arch]` `[art]` `[balance]` `[test]`.
   1000, city max L3 — pulled from thin air, needs a real pass.
 - `[balance]` Commander passive magnitudes, rebuy multipliers, Elite cost/bonuses,
   unit costs, and the damage matchup table are all first-guess values.
+- `[balance]` Supply-drop tuning is provisional: interval 7, gold windfall 3000, heal
+  +3 HP, reinforce = Infantry, draw weights 4/3/2/1.
 - `[balance]` Movement is uniform across unit types (no treads/tires/foot/air
   movement classes or per-terrain cost tables); no air/sea units.
 

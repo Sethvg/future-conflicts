@@ -89,6 +89,16 @@ around owned buildings. Enemies standing on **forest** are hidden until one of y
 units is adjacent. The renderer dims fogged tiles and hides unseen enemies.
 Toggle via `Battle.fogEnabled`.
 
+## Supply drops
+
+Every `Supply.INTERVAL` (7) turns a side takes, it receives a random **supply drop**
+at the start of its turn, drawn from a **seeded RNG** so the whole sequence is
+reproducible (replay- and multiplayer-friendly). The boon is one of — weighted
+4 / 3 / 2 / 1 — **gold windfall**, **reinforcements** (a free unit at HQ),
+**field repairs** (heal every friendly unit), or a **recon sweep** (reveal the whole
+map until your next turn). The draw is emitted as a serializable
+`Action.SupplyDrop(team, kind)`, so a recorded match replays without the RNG.
+
 ## Enemy AI (current)
 
 Greedy per-unit: take the best available attack (preferring kills); else capture a
@@ -99,6 +109,7 @@ reachable building; else advance toward the nearest player unit. It currently
 
 - **Readable at a glance** — flat colors + one glyph per unit today; gritty pixel
   art later.
-- **Deterministic** — no dice; positioning, matchups, and terrain decide fights.
+- **Deterministic** — combat has no dice; positioning, matchups, and terrain decide
+  fights. The only randomness (supply-drop draws) is seeded and reproducible.
 - **Portable, testable rules** — pure Kotlin core, host-tested, one codebase for
   Android + iOS, and an Action funnel built for multiplayer.

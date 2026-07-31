@@ -7,6 +7,9 @@ of "Done".
 
 ## Done
 
+- **Supply drops.** Seeded RNG in game state; every 7 turns a side takes, a weighted
+  boon (gold windfall / reinforcements / field repairs / recon sweep) emitted as a
+  serializable `Action.SupplyDrop(team, kind)` so recorded matches replay without the RNG.
 - **Fog of war.** Per-player vision view (kept out of the authoritative sim for
   multiplayer correctness): per-unit sight radius, mountains extend sight, forests
   hide enemies until you're adjacent, owned buildings grant vision. Renderer dims
@@ -18,9 +21,9 @@ of "Done".
 - **Economy & HQ purchasing + Action funnel.** Serializable `Action`s applied by
   `Battle.apply` (UI + AI both emit them); cities/HQ income, upgrades (raze→L1),
   capture, capture-the-HQ win.
-- **Foundation & tests.** `jvm()` host-test target; **38 passing tests**
+- **Foundation & tests.** `jvm()` host-test target; **54 passing tests**
   (`./gradlew :composeApp:jvmTest`) across combat, movement, turn flow, economy,
-  and commanders. High-level docs (Vision/Design/Architecture).
+  commanders, fog, and supply drops. High-level docs (Vision/Design/Architecture).
 - **Vertical slice (playable, on device).** KMP + Compose Multiplatform scaffold;
   pure-Kotlin tactics core (terrain, 5 unit types, AW-style damage + counters,
   Dijkstra movement, select→move→attack flow, greedy enemy AI, win-on-elimination,
@@ -28,23 +31,18 @@ of "Done".
 
 ## Next — sequenced
 
-### 1. Supply drops *(current focus)*
-- Add a **seeded RNG** to game state (deterministic for replay/multiplayer).
-- **Every-7-turns supply drop**: weighted boon (spawn a unit / gold windfall /
-  reveal fog / heal & resupply), rolled from the seed.
-- Tests: deterministic rolls from a fixed seed, boon effects, 7-turn cadence.
-
-### 2. Art pass (gritty detailed pixel art)
+### 1. Art pass (gritty detailed pixel art) *(current focus)*
 - PixelLab sprites for units (per faction) + terrain tiles; **team-color mask**
-  recolor at runtime.
+  recolor at runtime. Produced via the `pixel-sprite-smith` agent **in batches**,
+  tracked in [docs/ART.md](docs/ART.md). Batch 1 (units + terrain) is staged in `art/`.
 - **Battle animation scenes** composed from layers (attacker + defender + backdrop).
-- Replace rect/glyph rendering with sprite draws.
+- Wire staged PNGs into the renderer (needs a platform image-load bridge — see ART.md).
 
-### 3. Game feel & polish
+### 2. Game feel & polish
 - Animate/step the enemy turn; explicit Move/Attack/Wait menu + Cancel/undo;
   damage preview before committing; attack flashes; sound.
 
-### 4. Multiplayer
+### 3. Multiplayer
 - With Actions + determinism + per-player views already in place: hot-seat first,
   then async/live online.
 

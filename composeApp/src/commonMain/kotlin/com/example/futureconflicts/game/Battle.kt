@@ -1,5 +1,7 @@
 package com.example.futureconflicts.game
 
+import kotlin.random.Random
+
 /**
  * The whole game state and its rules. Pure logic — no rendering, no platform, no
  * Compose — so it can be unit-tested on the host.
@@ -19,6 +21,8 @@ class Battle(
     scenario: Scenario = Scenarios.twinRidges(),
     playerCommander: Commander? = null,
     enemyCommander: Commander? = null,
+    /** Seed for the supply-drop RNG. Fixed by default so games are reproducible. */
+    private val seed: Long = DEFAULT_SEED,
 ) {
 
     val map: GameMap = scenario.map
@@ -29,6 +33,23 @@ class Battle(
         mapOf(Team.PLAYER to PlayerState(), Team.ENEMY to PlayerState())
     private val commanders: MutableMap<Team, Commander?> =
         mutableMapOf(Team.PLAYER to playerCommander, Team.ENEMY to enemyCommander)
+
+    // ---- Supply drops (seeded, deterministic) ----
+    private var rng: Random = Random(seed)
+
+    /** Turns each side has *begun*. The opening player turn isn't run through
+     *  [beginTurn], so PLAYER starts pre-counted at 1 to keep both sides' cadence aligned. */
+    private val turnsTaken: MutableMap<Team, Int> =
+        mutableMapOf(Team.PLAYER to 1, Team.ENEMY to 0)
+
+    /** While set, that side's REVEAL boon is active and it sees the whole map. */
+    private var supplyRevealFor: Team? = null
+
+    /** The most recent supply drop, for the HUD and tests (null until the first drop). */
+    var lastSupplyKind: SupplyKind? = null
+        private set
+    var lastSupplyTeam: Team? = null
+        private set
 
     var turn: Team = Team.PLAYER
         private set
@@ -67,9 +88,10 @@ class Battle(
     /** Fog of war toggle. When off, everything is visible (useful for debugging). */
     var fogEnabled: Boolean = true
 
-    /** Tiles [team] can currently see (all tiles when fog is off). */
+    /** Tiles [team] can currently see (all tiles when fog is off or a REVEAL drop is active). */
     fun visibleTiles(team: Team): Set<Pos> =
-        if (!fogEnabled) allTiles else Vision.visibleTiles(map, team, units, buildings.values)
+        if (!fogEnabled || supplyRevealFor == team) allTiles
+        else Vision.visibleTiles(map, team, units, buildings.values)
 
     /** Whether [viewer] can see [unit] (pass the precomputed [visible] set to avoid rework). */
     fun isUnitVisible(viewer: Team, unit: Unit, visible: Set<Pos> = visibleTiles(viewer)): Boolean =
@@ -165,6 +187,7 @@ class Battle(
             is Action.Capture -> execCapture(action)
             is Action.Build -> execBuild(action)
             is Action.Upgrade -> execUpgrade(action)
+            is Action.SupplyDrop -> execSupplyDrop(action)
             Action.EndTurn -> if (turn == Team.PLAYER) { advanceTurn(); true } else false
         }
     }
@@ -246,6 +269,43 @@ class Battle(
         ps.gold -= Economy.CITY_UPGRADE_COST
         b.level++
         message = "City upgraded to L${b.level} (+${Economy.CITY_INCOME_PER_LEVEL}/turn)."
+        return true
+    }
+
+    /** Apply a supply-drop boon to [a.team]. Effects are fixed by [a.kind] (no RNG here). */
+    private fun execSupplyDrop(a: Action.SupplyDrop): Boolean {
+        val team = a.team
+        lastSupplyKind = a.kind
+        lastSupplyTeam = team
+        when (a.kind) {
+            SupplyKind.GOLD -> {
+                players.getValue(team).gold += Supply.GOLD_WINDFALL
+                message = "${team.label} supply drop: +${Supply.GOLD_WINDFALL}g."
+            }
+            SupplyKind.REINFORCE -> {
+                val hq = buildings.values.firstOrNull { it.owner == team && it.kind == Building.Kind.HQ }
+                val spawn = hq?.let { spawnTileFor(it.pos) }
+                if (spawn != null) {
+                    units.add(Unit(Supply.REINFORCE_UNIT, team, spawn).also { it.hasActed = true })
+                    message = "${team.label} supply drop: ${Supply.REINFORCE_UNIT.label} reinforcements."
+                } else {
+                    // No HQ / no landing zone — never waste the drop, pay out gold instead.
+                    players.getValue(team).gold += Supply.GOLD_WINDFALL
+                    message = "${team.label} supply drop: +${Supply.GOLD_WINDFALL}g (no landing zone)."
+                }
+            }
+            SupplyKind.HEAL -> {
+                units.filter { it.alive && it.team == team }.forEach {
+                    it.hp += Supply.HEAL_AMOUNT
+                    it.clampHp()
+                }
+                message = "${team.label} supply drop: field repairs (+${Supply.HEAL_AMOUNT} HP)."
+            }
+            SupplyKind.REVEAL -> {
+                supplyRevealFor = team
+                message = "${team.label} supply drop: recon sweep reveals the map."
+            }
+        }
         return true
     }
 
@@ -438,16 +498,21 @@ class Battle(
         runEnemyTurn()
         if (winner != null) return
         beginTurn(Team.PLAYER)
-        message = "Blue Army — Day $day."
     }
 
     private fun beginTurn(team: Team) {
         turn = team
-        if (team == Team.PLAYER) day++
+        if (team == Team.PLAYER) { day++; message = "Blue Army — Day $day." }
+        if (supplyRevealFor == team) supplyRevealFor = null // a prior recon sweep expires
+        turnsTaken[team] = turnsTaken.getValue(team) + 1
         val base = buildings.values.filter { it.owner == team }.sumOf { it.incomePerTurn }
         players.getValue(team).gold += base + base * passive(team, PassiveKind.INCOME) / 100
         units.filter { it.team == team }.forEach { it.hasActed = false }
         clearSelection()
+        // Every INTERVAL turns a side takes, it receives a seeded supply drop.
+        if (turnsTaken.getValue(team) % Supply.INTERVAL == 0) {
+            apply(Action.SupplyDrop(team, Supply.roll(rng)))
+        }
     }
 
     /** Greedy AI: best attack, else capture a reachable building, else advance. */
@@ -509,7 +574,18 @@ class Battle(
         turn = Team.PLAYER
         day = 1
         winner = null
+        rng = Random(seed)
+        turnsTaken[Team.PLAYER] = 1
+        turnsTaken[Team.ENEMY] = 0
+        supplyRevealFor = null
+        lastSupplyKind = null
+        lastSupplyTeam = null
         clearSelection(); dismissMenus()
         message = "Blue Army — Day 1. Tap a unit, or your HQ to build."
+    }
+
+    companion object {
+        /** Default supply-drop RNG seed; a fixed value keeps the shipped game reproducible. */
+        const val DEFAULT_SEED = 0x5EED_1234L
     }
 }

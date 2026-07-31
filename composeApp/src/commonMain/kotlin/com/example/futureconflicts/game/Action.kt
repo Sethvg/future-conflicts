@@ -26,6 +26,13 @@ sealed interface Action {
     /** Spend gold to raise the level of the owned city at [at]. */
     data class Upgrade(val at: Pos) : Action
 
+    /**
+     * Grant [team] a supply-drop boon of [kind]. Engine-emitted on the [Supply.INTERVAL]
+     * cadence (the [kind] is pre-rolled from the seeded RNG), so the recorded action is
+     * self-contained for replay.
+     */
+    data class SupplyDrop(val team: Team, val kind: SupplyKind) : Action
+
     /** End the current side's turn (runs income + the enemy turn). */
     data object EndTurn : Action
 }
