@@ -57,6 +57,11 @@ Tags: `[ai]` `[ux]` `[fog]` `[econ]` `[arch]` `[art]` `[balance]` `[test]`.
   re-applying the recorded `Action.SupplyDrop`s in order (fine until live netcode).
 
 ## Architecture
+- `[arch]` **`internal` state is module-wide.** Splitting `Battle` into extension files
+  widened its state from `private` to `internal`, and the renderer lives in the *same*
+  module — so `GameScreen` could now mutate state directly and bypass the `apply(Action)`
+  funnel + `version++`. Enforced by convention only until the `:core` module lands
+  (below), which makes `internal` genuinely core-private. Raised by `code-auditor`.
 - `[arch]` **Extract a compose-free `:core` module** for the game logic (currently
   in `composeApp/.../game/`). Enforces the "core stays pure" rule at build level and
   speeds core tests. See [ARCHITECTURE.md](ARCHITECTURE.md) "Planned".

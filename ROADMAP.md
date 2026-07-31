@@ -61,12 +61,13 @@ AdMob edits so we don't collide on `GameScreen.kt`.
 - **Fuel** attribute (debuts on air): burns per turn, refuel at owned Airport/base,
   crash at 0. **Gunship** + **Anti-Air** (the hard counter). Built from Airport/Factory.
 
-### 2.5 Core modularization *(current focus)*
-- Split the monolithic `Battle.kt` into cohesive files — turn flow, production, combat
-  resolution, enemy AI, interaction, the commander stat pipeline — so the core supports
-  **maintenance, parallel workstreams, and focused testing**. Behaviour-neutral: all host
-  tests stay green. Update [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) with the module map.
-  (Evaluate extracting a compose-free `:core` Gradle module too.)
+### 2.5 Core modularization + OOP units — ✅ done (f64ca7d)
+- `Battle.kt` 651 → 254 lines (facade: state + public API + `apply` funnel) plus cohesive
+  `internal` extension files: `BattleStats` / `BattleActions` / `BattleTurn` / `BattleAI` /
+  `BattleInteraction`. Behaviour-neutral, 80 tests green.
+- **OOP unit hierarchy:** `UnitClass` (Ground/Foot/Air/Naval) owns movement, capture,
+  targeting and fuel behaviour; `UnitType` keeps identity + stats and delegates. Adding a
+  unit = picking a class, not editing rules. `NavalClass` is ready for Slice 4.
 - **Standing rule from here on:** keep files cohesive and small — no new monolith.
 
 ### 3. Drone Command *(signature mechanic)*
