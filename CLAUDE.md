@@ -103,6 +103,10 @@ user-level game-dev agents adapt to it automatically. Roster + how the system wo
 - **Commands:** `/brainstorm` (design partner over VISION + open questions), `/groom` (shape a
   ROADMAP item), `/build-run` (host tests / build with the JBR handled).
 - Agents read `.pixelforge.json` first, so keep it honest — run `doc-sync` when code drifts from it.
-- Batch-1 sprites are staged in `art/` but **not yet wired** (renderer still draws primitives/glyphs).
+- **Before committing:** run `code-auditor` on the staged diff (redundancy / code quality /
+  scalability / correctness & layering concerns; reports only, changes nothing). A non-blocking
+  hook reminds you on `git commit`.
+- Batch-1 sprites (`art/`) are **wired** into `GameScreen.kt` (base64-embedded in `SpriteData.kt` +
+  `expect/actual decodeImageBitmap`; terrain tiles + team-tinted unit sprites, primitives as fallback).
   The PixelLab MCP is currently configured only for the Rogueshapes repo — add its server block here
   before generating more art.
