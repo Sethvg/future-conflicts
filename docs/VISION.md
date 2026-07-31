@@ -145,10 +145,13 @@ roster keeps every faction playable in every domain.
 
 - **Cities** generate gold each turn. They can be **upgraded** with gold
   (e.g. 1000 → +100 gold/turn per level), stacking over levels.
-- **Razing:** when a city is lost/razed it **drops back to level 1** — upgrades are
-  an investment you must defend, a real risk/reward decision.
-- **HQ** is production + a high-value capture objective.
-- Gold sinks: unit production, city upgrades, (later) Commander powers.
+- **Razing:** a leveled income building (city or **oil well**) drops back to **level 1**
+  two ways — on **capture** (with the ownership flip), or by **bombardment**: **ordnance
+  units — artillery, rockets, bombers, battleships — can raze an enemy building to L1
+  *without taking it*, burning its upgrades as pure economic denial.** Light units (recon
+  jeeps, gunships) **cannot** raze. Upgrades are an investment you must defend.
+- **HQ** is income + the capture-to-win seat (and doubles as a Barracks); see Production.
+- Gold sinks: unit production, city/oil upgrades, (later) Commander powers.
 
 ## Fog of war
 

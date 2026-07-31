@@ -73,6 +73,10 @@ AdMob edits so we don't collide on `GameScreen.kt`.
 ### 6. Fill-ins & tiers
 - Fighter/Bomber, Heavy Tank, Rockets (indirect tier-2), APC land transport; Elite
   signature variants per production building.
+- **Razing (economic denial):** ordnance units (artillery / rockets / bombers /
+  battleships) can raze an enemy **city or oil well to L1 without capturing it** — light
+  units (recon, gunships) can't. Artillery already qualifies, so a basic version can land
+  anytime, independent of the slices above.
 
 ### 7. Game feel & polish
 - Step/animate the enemy (and drone) turn; damage preview; attack flashes; sound;
