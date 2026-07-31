@@ -7,6 +7,10 @@ of "Done".
 
 ## Done
 
+- **Slice 1 — distributed production.** Units build from captured category buildings
+  (Barracks/Factory; HQ doubles as a Barracks); category-gated `execBuild`, per-building
+  build menu, capture = build-access-only, Twin Ridges seeded with production buildings.
+  62 host tests.
 - **Art — Batch 1 (units + terrain), wired.** 6 neutral-gray colorizable unit tokens +
   7 terrain tiles via the `pixel-sprite-smith` pipeline, drawn in `GameScreen.kt`
   (base64-embedded + `expect/actual` decode; team-tinted). Batches 2+ in [docs/ART.md](docs/ART.md).
@@ -39,7 +43,7 @@ ships playable + host-tested. Art (Batch 2+) and game-feel polish run as a **par
 track** ([docs/ART.md](docs/ART.md)); the renderer-touching steps are timed around the
 AdMob edits so we don't collide on `GameScreen.kt`.
 
-### 1. Production-building overhaul *(foundational — everything below needs it)*
+### 1. Production-building overhaul — ✅ done (e74d417)
 - Generalize `Building` into production kinds: **Barracks** (infantry), **Factory**
   (vehicles), **Airport** (aircraft), **Port** (ships), plus income (City, Oil Well) and
   the HQ. Capturable like cities.
@@ -49,7 +53,7 @@ AdMob edits so we don't collide on `GameScreen.kt`.
 - Place the new buildings on Twin Ridges (each side starts with Barracks+Factory;
   Airport/Port/Drone Command/Oil Well are contested). Keep the current units working.
 
-### 2. Air layer + Anti-Air *(introduces the air movement class + fuel)*
+### 2. Air layer + Anti-Air *(current focus — introduces the air movement class + fuel)*
 - Movement classes: ground/naval/**air** (flyers ignore terrain cost, can't capture).
 - **Fuel** attribute (debuts on air): burns per turn, refuel at owned Airport/base,
   crash at 0. **Gunship** + **Anti-Air** (the hard counter). Built from Airport/Factory.

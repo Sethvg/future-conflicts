@@ -11,7 +11,9 @@ plan in [../ROADMAP.md](../ROADMAP.md), deferred polish in [BACKLOG.md](BACKLOG.
 1. **Pick a Commander** before the battle (Blue chooses; Red auto-picks another).
 2. On your turn each ready unit may **move** once, then take **one action**:
    attack an enemy in range, **capture** a building it's standing on, or wait.
-3. At your HQ, spend gold to **build** units (basic / Elite signature / Commander).
+3. At an owned **production building** — Barracks (infantry), Factory (vehicles), or the
+   HQ (which doubles as a Barracks) — spend gold to **build** units (basic / Elite
+   signature); the Commander is an HQ-only purchase.
 4. **End Turn** → income is collected, the enemy army acts, control returns to you
    (a new "Day").
 5. **Win** by destroying the enemy army **or** capturing the enemy HQ.
@@ -70,7 +72,11 @@ range; **indirect** units neither counter nor get countered.
 - **City upgrades:** 1000 gold → +1 level (+income), up to level 3.
 - **Capture:** a foot unit (Infantry/Mech) on an enemy/neutral building subtracts
   its HP from the building's capture points (start 20); at 0 it flips owner and is
-  **razed to level 1**. Capturing the enemy **HQ wins**.
+  **razed to level 1**. Capturing the enemy **HQ wins**. Capturing a *production*
+  building grants build access only — it never converts existing units.
+- **Production:** units come from owned category buildings — **Barracks** (infantry),
+  **Factory** (vehicles); the **HQ** also builds infantry and is where the Commander is
+  bought. (Airport/Port/Drone Command kinds exist for later slices.)
 
 ## Commanders & factions
 
