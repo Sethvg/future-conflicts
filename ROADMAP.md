@@ -66,8 +66,9 @@ AdMob edits so we don't collide on `GameScreen.kt`.
 - Amphibious transport (load/unload across the land↔sea boundary).
 
 ### 5. Oil wells *(sea economy)*
-- Capturable offshore income platforms on `SEA`, upgradeable like cities; captured by a
-  **ship occupying** them (MVP). Holding the sea pays.
+- Capturable offshore income platforms on `SEA`, upgradeable like cities; captured by
+  **marines delivered via Lander** (the platform tile is standable once a marine lands).
+  Depends on the amphibious transport from slice 4. Holding the sea pays.
 
 ### 6. Fill-ins & tiers
 - Fighter/Bomber, Heavy Tank, Rockets (indirect tier-2), APC land transport; Elite

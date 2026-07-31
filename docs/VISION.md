@@ -86,13 +86,14 @@ helo). Naval brings ships — **lander** (amphibious transport), **destroyer** (
 refuel at base or they're lost — the mechanic debuts with the drone flight below.
 *Open: exact ship roster; coastal (ship↔land) combat rules.*
 
-## Sea economy: oil wells *(direction)*
+## Sea economy: oil wells
 
 **Oil wells are cities on water** — capturable offshore platforms on `SEA` tiles that
-generate gold/turn and upgrade like cities (razed to L1 on capture). Since foot units
-can't stand on water, they're seized by a **naval unit occupying them** (or marines
-delivered by a lander). Holding the sea now *pays*, giving a reason to contest it.
-*Open: capture method (ship-occupies vs delivered infantry); upgrade curve.*
+generate gold/turn and upgrade like cities (razed to L1 on capture). They're seized the
+same way land cities are — by **infantry ("marines")** — but the marines must be
+delivered by a **Lander** (foot units can't cross open water on their own); the platform
+tile is standable once one is dropped there. This ties the sea economy to the amphibious
+loop: escort the lander, land the marines, hold the rig. Holding the sea *pays*.
 
 ## Drone Command *(signature mechanic)*
 
