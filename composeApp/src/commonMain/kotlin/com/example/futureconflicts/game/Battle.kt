@@ -2,6 +2,10 @@ package com.example.futureconflicts.game
 
 import kotlin.random.Random
 
+/** One buildable option offered by an open production building: a unit type plus
+ *  whether it's the Elite (signature) variant. */
+data class BuildOption(val type: UnitType, val elite: Boolean)
+
 /**
  * The whole game state and its rules. Pure logic — no rendering, no platform, no
  * Compose — so it can be unit-tested on the host.
@@ -171,6 +175,23 @@ class Battle(
         return b
     }
 
+    /** Units the currently open production building ([buildMenuAt]) can build this turn. */
+    fun buildableHere(): List<BuildOption> {
+        val at = buildMenuAt ?: return emptyList()
+        val b = buildings[at] ?: return emptyList()
+        val team = turn
+        val cat = b.kind.builds
+        val out = mutableListOf<BuildOption>()
+        if (cat != null) {
+            for (t in UnitType.entries) if (t.basic && t.category == cat) out += BuildOption(t, elite = false)
+            commanders[team]?.signature?.let { sig ->
+                if (sig.basic && sig.category == cat) out += BuildOption(sig, elite = true)
+            }
+        }
+        if (b.kind == Building.Kind.HQ && !hasCommander(team)) out += BuildOption(UnitType.COMMANDER, elite = false)
+        return out
+    }
+
     // ===============================================================
     // Authoritative simulation — the single mutation funnel
     // ===============================================================
@@ -246,9 +267,15 @@ class Battle(
     }
 
     private fun execBuild(a: Action.Build): Boolean {
-        val hq = buildings[a.at] ?: return false
-        if (hq.kind != Building.Kind.HQ || hq.owner != turn) return false
-        if (a.type == UnitType.COMMANDER && hasCommander(turn)) return false // one per player
+        val b = buildings[a.at] ?: return false
+        if (b.owner != turn) return false
+        // The Commander is an HQ-only purchase; every other unit needs a production
+        // building whose category matches (the HQ also builds the infantry category).
+        if (a.type == UnitType.COMMANDER) {
+            if (b.kind != Building.Kind.HQ || hasCommander(turn)) return false
+        } else if (b.kind.builds != a.type.category) {
+            return false
+        }
         val cost = buildCost(turn, a.type, a.elite) ?: return false
         val ps = players.getValue(turn)
         if (ps.gold < cost) return false
@@ -385,13 +412,13 @@ class Battle(
         if (u != null && u.team == Team.PLAYER && !u.hasActed) { select(u); return }
         val b = buildings[p]
         if (b != null && b.owner == Team.PLAYER && u == null) {
-            when (b.kind) {
-                Building.Kind.HQ -> { buildMenuAt = p; message = "Build a unit at HQ." }
-                Building.Kind.CITY -> {
+            when {
+                b.kind == Building.Kind.CITY -> {
                     upgradeAt = p
                     message = if (b.level >= Economy.CITY_MAX_LEVEL) "City is fully upgraded."
                     else "Upgrade city to L${b.level + 1}? (${Economy.CITY_UPGRADE_COST}g)"
                 }
+                b.kind.builds != null -> { buildMenuAt = p; message = "Build a unit here." }
             }
             return
         }

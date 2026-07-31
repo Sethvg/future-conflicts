@@ -52,13 +52,27 @@ class Building(
     var level: Int = 1,
     var captureLeft: Int = Economy.CAPTURE_POINTS,
 ) {
-    enum class Kind { CITY, HQ }
+    enum class Kind {
+        CITY, HQ, BARRACKS, FACTORY, AIRPORT, PORT, DRONE_COMMAND;
 
-    /** Gold produced per turn while owned. */
+        /** The unit [Category] this building can produce, or null if it isn't a unit
+         *  factory (income buildings; Drone Command fields drones via its own path). */
+        val builds: Category?
+            get() = when (this) {
+                HQ, BARRACKS -> Category.INFANTRY // the HQ doubles as a Barracks
+                FACTORY -> Category.VEHICLE
+                AIRPORT -> Category.AIR
+                PORT -> Category.SHIP
+                CITY, DRONE_COMMAND -> null
+            }
+    }
+
+    /** Gold produced per turn while owned (production buildings yield none). */
     val incomePerTurn: Int
         get() = when (kind) {
             Kind.HQ -> Economy.HQ_INCOME
             Kind.CITY -> Economy.CITY_INCOME_PER_LEVEL * level
+            else -> 0
         }
 
     fun copy(): Building = Building(pos, kind, owner, level, captureLeft)

@@ -110,10 +110,10 @@ class EconomyTest {
         val battle = battleWith(
             map,
             units = listOf(Unit(UnitType.INFANTRY, Team.ENEMY, Pos(4, 0))),
-            buildings = listOf(Building(Pos(0, 0), Building.Kind.HQ, owner = Team.PLAYER)),
+            buildings = listOf(Building(Pos(0, 0), Building.Kind.FACTORY, owner = Team.PLAYER)),
         )
         val before = battle.goldOf(Team.PLAYER)
-        // A Tank costs 7000; we start with 5000.
+        // A Factory *can* build a Tank, but it costs 7000 and we start with 5000.
         assertFalse(battle.apply(Action.Build(UnitType.TANK, Pos(0, 0))))
         assertEquals(before, battle.goldOf(Team.PLAYER))
         assertNull(battle.unitAt(Pos(0, 0)))

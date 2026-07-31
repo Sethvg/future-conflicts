@@ -10,6 +10,9 @@ package com.example.futureconflicts.game
  *   marks an *indirect* unit.
  * @param cost production cost (funds), used once base-building lands.
  */
+/** Which production building fields a unit (see [Building.Kind.builds]). */
+enum class Category { INFANTRY, VEHICLE, AIR, SHIP }
+
 enum class UnitType(
     val label: String,
     val glyph: String,
@@ -18,16 +21,17 @@ enum class UnitType(
     val maxRange: Int,
     val cost: Int,
     val vision: Int,
+    val category: Category,
     val canCapture: Boolean = false,
 ) {
-    INFANTRY("Infantry", "I", maxMove = 3, minRange = 1, maxRange = 1, cost = 1000, vision = 2, canCapture = true),
-    MECH("Mech", "M", maxMove = 2, minRange = 1, maxRange = 1, cost = 3000, vision = 2, canCapture = true),
-    RECON("Recon", "R", maxMove = 8, minRange = 1, maxRange = 1, cost = 4000, vision = 5),
-    TANK("Tank", "T", maxMove = 6, minRange = 1, maxRange = 1, cost = 7000, vision = 3),
-    ARTILLERY("Artillery", "A", maxMove = 5, minRange = 2, maxRange = 3, cost = 6000, vision = 2),
+    INFANTRY("Infantry", "I", maxMove = 3, minRange = 1, maxRange = 1, cost = 1000, vision = 2, category = Category.INFANTRY, canCapture = true),
+    MECH("Mech", "M", maxMove = 2, minRange = 1, maxRange = 1, cost = 3000, vision = 2, category = Category.INFANTRY, canCapture = true),
+    RECON("Recon", "R", maxMove = 8, minRange = 1, maxRange = 1, cost = 4000, vision = 5, category = Category.VEHICLE),
+    TANK("Tank", "T", maxMove = 6, minRange = 1, maxRange = 1, cost = 7000, vision = 3, category = Category.VEHICLE),
+    ARTILLERY("Artillery", "A", maxMove = 5, minRange = 2, maxRange = 3, cost = 6000, vision = 2, category = Category.VEHICLE),
 
-    /** The Commander hero unit: strong, expensive, one per player, rebuy escalates. */
-    COMMANDER("Commander", "★", maxMove = 6, minRange = 1, maxRange = 1, cost = 16000, vision = 4);
+    /** The Commander hero unit: strong, expensive, one per player, rebuy escalates. Built at the HQ. */
+    COMMANDER("Commander", "★", maxMove = 6, minRange = 1, maxRange = 1, cost = 16000, vision = 4, category = Category.VEHICLE);
 
     /** Indirect units (artillery) attack at range but cannot move and fire. */
     val indirect: Boolean get() = maxRange > 1

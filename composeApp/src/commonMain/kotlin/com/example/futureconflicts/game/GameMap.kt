@@ -36,7 +36,7 @@ class Scenario(
 object Scenarios {
 
     private val TWIN_RIDGES_ROWS = listOf(
-        "..H....mm.",
+        ".BH.Y..mm.",
         ".c..ff..m.",
         "...ff.....",
         "ss......c.",
@@ -47,7 +47,7 @@ object Scenarios {
         ".c...m...s",
         "....ff..ss",
         ".mm....c..",
-        "......H...",
+        "....Y.HB..",
     )
 
     private fun terrainOf(c: Char): Terrain = when (c) {
@@ -55,7 +55,7 @@ object Scenarios {
         '-' -> Terrain.ROAD
         'f' -> Terrain.FOREST
         'm' -> Terrain.MOUNTAIN
-        'c' -> Terrain.CITY
+        'c', 'B', 'Y' -> Terrain.CITY // production buildings stand on urban tiles
         's' -> Terrain.SEA
         'H' -> Terrain.HQ
         else -> Terrain.PLAINS
@@ -67,21 +67,18 @@ object Scenarios {
         val tiles = Array(rows * cols) { i -> terrainOf(TWIN_RIDGES_ROWS[i / cols][i % cols]) }
         val map = GameMap(cols, rows, tiles)
 
-        // Buildings derive from terrain: HQs are owned (north = Red, south = Blue),
-        // cities start neutral and are fought over for income.
+        // Buildings derive from the source char (so Barracks/Factory, which share the
+        // CITY tile look, stay distinct from neutral cities). HQ + production buildings
+        // start owned by their half (north = Red, south = Blue); cities start neutral.
         val buildings = buildList {
             for (y in 0 until rows) {
                 for (x in 0 until cols) {
-                    when (map[x, y]) {
-                        Terrain.HQ -> add(
-                            Building(
-                                Pos(x, y),
-                                Building.Kind.HQ,
-                                owner = if (y < rows / 2) Team.ENEMY else Team.PLAYER,
-                            ),
-                        )
-                        Terrain.CITY -> add(Building(Pos(x, y), Building.Kind.CITY, owner = null))
-                        else -> {}
+                    val side = if (y < rows / 2) Team.ENEMY else Team.PLAYER
+                    when (TWIN_RIDGES_ROWS[y][x]) {
+                        'H' -> add(Building(Pos(x, y), Building.Kind.HQ, owner = side))
+                        'c' -> add(Building(Pos(x, y), Building.Kind.CITY, owner = null))
+                        'B' -> add(Building(Pos(x, y), Building.Kind.BARRACKS, owner = side))
+                        'Y' -> add(Building(Pos(x, y), Building.Kind.FACTORY, owner = side))
                     }
                 }
             }
