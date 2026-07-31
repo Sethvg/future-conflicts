@@ -27,7 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -37,6 +40,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.futureconflicts.game.Battle
@@ -49,6 +54,7 @@ import com.example.futureconflicts.game.Terrain
 import com.example.futureconflicts.game.Unit
 import com.example.futureconflicts.game.UnitType
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 private object Palette {
     val screenBg = Color(0xFF0E1116)
@@ -93,6 +99,7 @@ private fun ownerColor(team: Team?): Color = when (team) {
 fun GameScreen(modifier: Modifier = Modifier) {
     val battle = remember { Battle() }
     val textMeasurer = rememberTextMeasurer()
+    val sprites = remember { loadSprites() }
 
     // Bumped after every interaction so the Canvas + HUD recompose; the Battle
     // itself is mutated in place.
@@ -150,10 +157,10 @@ fun GameScreen(modifier: Modifier = Modifier) {
                 cellSize = cs; originX = ox; originY = oy
 
                 val visible = battle.visibleTiles(Team.PLAYER)
-                drawBoard(battle, cs, ox, oy)
+                drawBoard(battle, sprites, cs, ox, oy)
                 drawBuildings(battle, cs, ox, oy, textMeasurer)
                 drawFog(battle, visible, cs, ox, oy)
-                drawUnits(battle, cs, ox, oy, textMeasurer, visible)
+                drawUnits(battle, sprites, cs, ox, oy, textMeasurer, visible)
             }
         }
 
@@ -275,11 +282,22 @@ private fun BuildButton(label: String, enabled: Boolean, elite: Boolean = false,
     ) { Text(label, color = if (elite) Color.Black else Color.White) }
 }
 
-private fun DrawScope.drawBoard(battle: Battle, cs: Float, ox: Float, oy: Float) {
+private fun DrawScope.drawBoard(battle: Battle, sprites: SpriteSet, cs: Float, ox: Float, oy: Float) {
     for (y in 0 until battle.map.rows) {
         for (x in 0 until battle.map.cols) {
             val tl = Offset(ox + x * cs, oy + y * cs)
-            drawRect(color = terrainColor(battle.map[x, y]), topLeft = tl, size = Size(cs, cs))
+            val tile = battle.map[x, y]
+            val img = sprites.terrain[tile]
+            if (img != null) {
+                drawImage(
+                    image = img,
+                    dstOffset = IntOffset((ox + x * cs).roundToInt(), (oy + y * cs).roundToInt()),
+                    dstSize = IntSize(cs.roundToInt(), cs.roundToInt()),
+                    filterQuality = FilterQuality.None,
+                )
+            } else {
+                drawRect(color = terrainColor(tile), topLeft = tl, size = Size(cs, cs))
+            }
             drawRect(color = Palette.gridLine, topLeft = tl, size = Size(cs, cs), style = Stroke(1f))
         }
     }
@@ -341,6 +359,7 @@ private fun DrawScope.drawFog(battle: Battle, visible: Set<Pos>, cs: Float, ox: 
 
 private fun DrawScope.drawUnits(
     battle: Battle,
+    sprites: SpriteSet,
     cs: Float,
     ox: Float,
     oy: Float,
@@ -355,12 +374,39 @@ private fun DrawScope.drawUnits(
             battle.previewPos ?: u.pos
         } else u.pos
 
-        val body = if (u.team == Team.PLAYER) Palette.player else Palette.enemy
-        val faded = if (u.hasActed && u.team == Team.PLAYER) body.copy(alpha = 0.45f) else body
+        val teamColor = if (u.team == Team.PLAYER) Palette.player else Palette.enemy
+        val dim = u.hasActed && u.team == Team.PLAYER
         val inset = cs * 0.14f
         val tl = Offset(ox + drawPos.x * cs + inset, oy + drawPos.y * cs + inset)
         val sz = Size(cs - 2 * inset, cs - 2 * inset)
-        drawRoundRect(color = faded, topLeft = tl, size = sz, cornerRadius = CornerRadius(cs * 0.12f, cs * 0.12f))
+
+        val img = sprites.units[u.type]
+        if (img != null) {
+            // Neutral-gray sprite tinted to the team color (Modulate = per-channel multiply).
+            drawImage(
+                image = img,
+                dstOffset = IntOffset((ox + drawPos.x * cs).roundToInt(), (oy + drawPos.y * cs).roundToInt()),
+                dstSize = IntSize(cs.roundToInt(), cs.roundToInt()),
+                alpha = if (dim) 0.55f else 1f,
+                colorFilter = ColorFilter.tint(teamColor, BlendMode.Modulate),
+                filterQuality = FilterQuality.None,
+            )
+        } else {
+            // Fallback if a sprite is missing: the original colored token + glyph.
+            val faded = if (dim) teamColor.copy(alpha = 0.45f) else teamColor
+            drawRoundRect(color = faded, topLeft = tl, size = sz, cornerRadius = CornerRadius(cs * 0.12f, cs * 0.12f))
+            val glyph = tm.measure(
+                AnnotatedString(u.type.glyph),
+                style = TextStyle(color = Color.White, fontSize = (cs * 0.40f).toSp(), fontWeight = FontWeight.Bold),
+            )
+            drawText(
+                glyph,
+                topLeft = Offset(
+                    ox + drawPos.x * cs + (cs - glyph.size.width) / 2f,
+                    oy + drawPos.y * cs + (cs - glyph.size.height) / 2f,
+                ),
+            )
+        }
         if (u.elite) {
             drawRoundRect(
                 color = Palette.capture,
@@ -370,18 +416,6 @@ private fun DrawScope.drawUnits(
                 style = Stroke(width = cs * 0.05f),
             )
         }
-
-        val glyph = tm.measure(
-            AnnotatedString(u.type.glyph),
-            style = TextStyle(color = Color.White, fontSize = (cs * 0.40f).toSp(), fontWeight = FontWeight.Bold),
-        )
-        drawText(
-            glyph,
-            topLeft = Offset(
-                ox + drawPos.x * cs + (cs - glyph.size.width) / 2f,
-                oy + drawPos.y * cs + (cs - glyph.size.height) / 2f,
-            ),
-        )
 
         if (u.hp < Unit.MAX_HP) {
             val hpColor = if (u.hp <= 3) Palette.capture else Color.White

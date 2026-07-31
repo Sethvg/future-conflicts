@@ -109,14 +109,21 @@ to completion, `curl` the download URL into `art/…`, write a `manifest.md`.
 
 ---
 
-## Integration (separate task — not part of generation)
+## Integration (DONE)
 
 The build has **no compose-resources plugin** (see [../CLAUDE.md](../CLAUDE.md)), so
-`Res.drawable` / `painterResource` are unavailable. Wiring staged PNGs into the
-`Canvas` renderer will need a small platform bridge: an `expect/actual`
-`loadImageBitmap(name)` (Android decodes via `BitmapFactory`; iOS/skiko via
-`org.jetbrains.skia.Image`), with PNGs shipped as platform resources. Tracked as a
-ROADMAP art sub-item; `GameScreen` keeps drawing rects/glyphs until that lands.
+`Res.drawable` / `painterResource` are unavailable. Instead of a resource pipeline,
+the Batch-1 PNGs are **base64-embedded** in `SpriteData.kt` (commonMain) and decoded
+once via an `expect/actual decodeImageBitmap(ByteArray)` — Android `BitmapFactory`,
+jvm/iOS `org.jetbrains.skia.Image`. `GameScreen.kt` draws terrain tiles and
+team-tinted unit sprites (`ColorFilter.tint(teamColor, Modulate)`), falling back to
+the original rects/glyphs for any missing sprite. Verified on the emulator (Android)
+and jvm compile.
+
+**Known follow-ups:** (1) the Modulate tint darkens the neutral-gray sprites — tune
+the blend (lighter team colors / team base disc) for punchier blue-vs-red;
+(2) base64-in-source won't scale past a handful of sprites — migrate to a real
+resource pipeline before the animation/faction batches.
 
 ---
 
@@ -125,7 +132,7 @@ ROADMAP art sub-item; `GameScreen` keeps drawing rects/glyphs until that lands.
 | Batch | Assets | State | Notes |
 |-------|--------|-------|-------|
 | 1 (production) | 6 unit tokens (`pixel-sprite-smith`) + 7 terrain tiles | **done** — staged in `art/units/` + `art/terrain/` | neutral-gray colorizable, 80×80; commander→half-track & artillery→howitzer fixes landed; mountain re-rolled pale grey |
-| — wiring | staged PNGs → renderer | not started | use `sprite-wiring` (needs the platform image-load bridge; renderer still draws primitives) |
+| — wiring | staged PNGs → renderer | **done** | base64-embedded (`SpriteData.kt`) + `expect/actual decodeImageBitmap` (android/jvm/ios); terrain + team-tinted units drawn in `GameScreen.kt`, primitives kept as fallback. **TODO: tint reads too dark** (Modulate on gray) — tune blend or add a team base |
 | 2 | commander portraits + faction crests + UI icons | not started | |
 | 3–5 | recolor pipeline / battle scenes / terrain polish | not started | Batch 4 animates the retained smith unit objects |
 

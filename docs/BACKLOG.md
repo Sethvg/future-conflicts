@@ -63,9 +63,17 @@ Tags: `[ai]` `[ux]` `[fog]` `[econ]` `[arch]` `[art]` `[balance]` `[test]`.
   online). Seeded RNG lands with supply drops.
 
 ## Content / art
-- `[art]` Rendering is **colored rects + letter glyphs** — the whole gritty
-  pixel-art pass is pending (PixelLab sprites, terrain tiles, **team-color mask**
-  recolor, **composed battle-animation scenes**).
+- `[art]` **Sprite loading is base64-embedded** in `SpriteData.kt` (no compose-resources
+  plugin on this toolchain) — fine for Batch 1, but migrate to a real resource pipeline
+  before the animation/faction batches bloat the source.
+- `[art]` **Unit team-tint reads too dark** — `ColorFilter.tint(teamColor, Modulate)` on
+  neutral-gray sprites murks them; tune the blend (lighter team colors) or add a
+  team-colored base disc so blue-vs-red pops.
+- `[art]` Terrain + unit tokens are wired, but **buildings/HQ/city still draw as
+  border+label over the terrain tile** — no dedicated building sprites yet.
+- `[art]` Rendering was **colored rects + letter glyphs** — now sprites for units +
+  terrain; still pending: **team-color polish**, per-faction skins, **composed
+  battle-animation scenes**, portraits, UI icons.
 - `[art]` Per-faction **unique unit skins**; Elite units currently differ only by
   stats + a gold outline (no unique art).
 - `[art]` Only one hand-authored map ("Twin Ridges") — no map format / loader /
