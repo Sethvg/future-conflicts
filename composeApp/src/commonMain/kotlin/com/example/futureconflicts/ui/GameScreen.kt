@@ -71,6 +71,10 @@ private object Palette {
     val selectRing = Color(0xFFFFFFFF)
     val player = Color(0xFF3D7DD8)
     val enemy = Color(0xFFE5484D)
+    // Lighter team colors used to *multiply* (Modulate) the neutral-gray unit sprites;
+    // the UI blue/red above are too dark for that and murk the art.
+    val playerTint = Color(0xFF9DC2FF)
+    val enemyTint = Color(0xFFFF9A94)
     val neutral = Color(0xFFB6BEC7)
     val capture = Color(0xFFFFD54F)
     val fog = Color(0xAA0A0D12)
@@ -375,6 +379,7 @@ private fun DrawScope.drawUnits(
         } else u.pos
 
         val teamColor = if (u.team == Team.PLAYER) Palette.player else Palette.enemy
+        val tintColor = if (u.team == Team.PLAYER) Palette.playerTint else Palette.enemyTint
         val dim = u.hasActed && u.team == Team.PLAYER
         val inset = cs * 0.14f
         val tl = Offset(ox + drawPos.x * cs + inset, oy + drawPos.y * cs + inset)
@@ -382,13 +387,14 @@ private fun DrawScope.drawUnits(
 
         val img = sprites.units[u.type]
         if (img != null) {
-            // Neutral-gray sprite tinted to the team color (Modulate = per-channel multiply).
+            // Neutral-gray sprite multiplied by a light team color (Modulate) so the
+            // detail survives while the unit still reads clearly as blue vs red.
             drawImage(
                 image = img,
                 dstOffset = IntOffset((ox + drawPos.x * cs).roundToInt(), (oy + drawPos.y * cs).roundToInt()),
                 dstSize = IntSize(cs.roundToInt(), cs.roundToInt()),
                 alpha = if (dim) 0.55f else 1f,
-                colorFilter = ColorFilter.tint(teamColor, BlendMode.Modulate),
+                colorFilter = ColorFilter.tint(tintColor, BlendMode.Modulate),
                 filterQuality = FilterQuality.None,
             )
         } else {
