@@ -23,10 +23,16 @@ enum class UnitType(
     MECH("Mech", "M", maxMove = 2, minRange = 1, maxRange = 1, cost = 3000, canCapture = true),
     RECON("Recon", "R", maxMove = 8, minRange = 1, maxRange = 1, cost = 4000),
     TANK("Tank", "T", maxMove = 6, minRange = 1, maxRange = 1, cost = 7000),
-    ARTILLERY("Artillery", "A", maxMove = 5, minRange = 2, maxRange = 3, cost = 6000);
+    ARTILLERY("Artillery", "A", maxMove = 5, minRange = 2, maxRange = 3, cost = 6000),
+
+    /** The Commander hero unit: strong, expensive, one per player, rebuy escalates. */
+    COMMANDER("Commander", "★", maxMove = 6, minRange = 1, maxRange = 1, cost = 16000);
 
     /** Indirect units (artillery) attack at range but cannot move and fire. */
     val indirect: Boolean get() = maxRange > 1
+
+    /** Buildable from HQ as a normal unit (the Commander/Elite have their own paths). */
+    val basic: Boolean get() = this != COMMANDER
 }
 
 /**
@@ -40,6 +46,8 @@ class Unit(
     val team: Team,
     var pos: Pos,
     var hp: Int = MAX_HP,
+    /** Elite (signature) variant — a stat-boosted build of a Commander's signature chassis. */
+    val elite: Boolean = false,
 ) {
     /** True once this unit has spent its action this turn (moved+acted, or waited). */
     var hasActed: Boolean = false

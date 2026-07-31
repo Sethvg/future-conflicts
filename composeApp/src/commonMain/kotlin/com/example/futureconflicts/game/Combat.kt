@@ -20,23 +20,27 @@ object Combat {
     private val base: Map<UnitType, Map<UnitType, Int>> = mapOf(
         UnitType.INFANTRY to mapOf(
             UnitType.INFANTRY to 55, UnitType.MECH to 45, UnitType.RECON to 12,
-            UnitType.TANK to 5, UnitType.ARTILLERY to 15,
+            UnitType.TANK to 5, UnitType.ARTILLERY to 15, UnitType.COMMANDER to 8,
         ),
         UnitType.MECH to mapOf(
             UnitType.INFANTRY to 65, UnitType.MECH to 55, UnitType.RECON to 18,
-            UnitType.TANK to 55, UnitType.ARTILLERY to 70,
+            UnitType.TANK to 55, UnitType.ARTILLERY to 70, UnitType.COMMANDER to 45,
         ),
         UnitType.RECON to mapOf(
             UnitType.INFANTRY to 70, UnitType.MECH to 65, UnitType.RECON to 35,
-            UnitType.TANK to 6, UnitType.ARTILLERY to 45,
+            UnitType.TANK to 6, UnitType.ARTILLERY to 45, UnitType.COMMANDER to 8,
         ),
         UnitType.TANK to mapOf(
             UnitType.INFANTRY to 75, UnitType.MECH to 70, UnitType.RECON to 85,
-            UnitType.TANK to 55, UnitType.ARTILLERY to 70,
+            UnitType.TANK to 55, UnitType.ARTILLERY to 70, UnitType.COMMANDER to 45,
         ),
         UnitType.ARTILLERY to mapOf(
             UnitType.INFANTRY to 90, UnitType.MECH to 85, UnitType.RECON to 80,
-            UnitType.TANK to 70, UnitType.ARTILLERY to 75,
+            UnitType.TANK to 70, UnitType.ARTILLERY to 75, UnitType.COMMANDER to 65,
+        ),
+        UnitType.COMMANDER to mapOf(
+            UnitType.INFANTRY to 90, UnitType.MECH to 85, UnitType.RECON to 90,
+            UnitType.TANK to 75, UnitType.ARTILLERY to 90, UnitType.COMMANDER to 60,
         ),
     )
 
@@ -45,20 +49,31 @@ object Combat {
 
     /**
      * HP damage [attacker] deals to [defender] standing on [defenderTerrain].
+     * [attackMul]/[defenseMul] fold in Commander/Elite firepower & armor (1.0 = none).
      * Does not mutate anything.
      */
-    fun damage(attacker: Unit, defender: Unit, defenderTerrain: Terrain): Int {
+    fun damage(
+        attacker: Unit,
+        defender: Unit,
+        defenderTerrain: Terrain,
+        attackMul: Double = 1.0,
+        defenseMul: Double = 1.0,
+    ): Int {
         val b = basePercent(attacker.type, defender.type)
         if (b == 0) return 0
         val raw = (b / 10.0) *
             (attacker.hp.toDouble() / Unit.MAX_HP) *
             (1.0 - 0.1 * defenderTerrain.defense * (defender.hp.toDouble() / Unit.MAX_HP))
-        return raw.roundToInt().coerceIn(0, defender.hp)
+        return (raw * attackMul * defenseMul).roundToInt().coerceIn(0, defender.hp)
     }
 
-    /** True if [attacker] at [from] can strike a unit at [target]. */
-    fun inRange(attacker: UnitType, from: Pos, target: Pos): Boolean {
+    /** True if a unit with the given range band at [from] can strike [target]. */
+    fun inRange(from: Pos, target: Pos, minRange: Int, maxRange: Int): Boolean {
         val d = from.manhattan(target)
-        return d in attacker.minRange..attacker.maxRange
+        return d in minRange..maxRange
     }
+
+    /** Convenience using a unit type's base range band. */
+    fun inRange(attacker: UnitType, from: Pos, target: Pos): Boolean =
+        inRange(from, target, attacker.minRange, attacker.maxRange)
 }

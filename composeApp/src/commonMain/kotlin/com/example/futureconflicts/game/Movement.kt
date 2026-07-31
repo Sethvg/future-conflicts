@@ -12,11 +12,17 @@ object Movement {
 
     /**
      * @param occupant returns the (living) unit standing on a tile, or null.
+     * @param budget movement points available (defaults to the unit's base move;
+     *   callers pass the Commander/Elite-adjusted value).
      * @return every tile the unit can *end its move* on, mapped to the move-point
      *   cost to get there. Always includes the unit's own tile at cost 0.
      */
-    fun reachable(map: GameMap, unit: Unit, occupant: (Pos) -> Unit?): Map<Pos, Int> {
-        val budget = unit.type.maxMove
+    fun reachable(
+        map: GameMap,
+        unit: Unit,
+        occupant: (Pos) -> Unit?,
+        budget: Int = unit.type.maxMove,
+    ): Map<Pos, Int> {
         val cost = HashMap<Pos, Int>()
         cost[unit.pos] = 0
         val settled = HashSet<Pos>()

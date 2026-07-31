@@ -20,8 +20,8 @@ sealed interface Action {
     /** Move (or stay) onto a capturable building at [to] and capture it. */
     data class Capture(val from: Pos, val to: Pos) : Action
 
-    /** Produce a unit of [type] at the owned HQ at [at]. */
-    data class Build(val type: UnitType, val at: Pos) : Action
+    /** Produce a unit of [type] at the owned HQ at [at]; [elite] builds the signature variant. */
+    data class Build(val type: UnitType, val at: Pos, val elite: Boolean = false) : Action
 
     /** Spend gold to raise the level of the owned city at [at]. */
     data class Upgrade(val at: Pos) : Action

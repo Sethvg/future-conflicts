@@ -3,6 +3,8 @@ package com.example.futureconflicts.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.futureconflicts.game.Battle
 import com.example.futureconflicts.game.Building
+import com.example.futureconflicts.game.Commanders
 import com.example.futureconflicts.game.Economy
 import com.example.futureconflicts.game.Pos
 import com.example.futureconflicts.game.Team
@@ -109,7 +112,12 @@ fun GameScreen(modifier: Modifier = Modifier) {
         ) {
             Column {
                 Text("FUTURE CONFLICTS", color = Palette.hud, fontWeight = FontWeight.Bold, fontSize = 19.sp)
-                Text("Day ${battle.day} · ${battle.turn.label}", color = Palette.hudDim, fontSize = 12.sp)
+                val cmd = battle.commanderOf(Team.PLAYER)
+                Text(
+                    "Day ${battle.day} · ${battle.turn.label}" + (cmd?.let { " · ${it.name}" } ?: ""),
+                    color = Palette.hudDim,
+                    fontSize = 12.sp,
+                )
             }
             Text("◆ ${battle.goldOf(Team.PLAYER)}g", color = Palette.gold, fontWeight = FontWeight.Bold, fontSize = 17.sp)
         }
@@ -126,7 +134,7 @@ fun GameScreen(modifier: Modifier = Modifier) {
                     .fillMaxSize()
                     .pointerInput(Unit) {
                         detectTapGestures { offset ->
-                            if (cellSize <= 0f) return@detectTapGestures
+                            if (cellSize <= 0f || battle.needsCommanderChoice) return@detectTapGestures
                             val gx = ((offset.x - originX) / cellSize).toInt()
                             val gy = ((offset.y - originY) / cellSize).toInt()
                             act { battle.onTap(Pos(gx, gy)) }
@@ -146,25 +154,63 @@ fun GameScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        Controls(battle) { block -> act(block) }
+        Controls(battle, version) { block -> act(block) }
     }
 }
 
 @Composable
-private fun Controls(battle: Battle, act: (() -> kotlin.Unit) -> kotlin.Unit) {
+private fun Controls(battle: Battle, version: Int, act: (() -> kotlin.Unit) -> kotlin.Unit) {
+    @Suppress("UNUSED_EXPRESSION") version // recompose the controls whenever state changes
     val pad = Modifier.fillMaxWidth().padding(16.dp)
     when {
-        battle.buildMenuOpen -> Column(pad, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Build at HQ — ${battle.goldOf(Team.PLAYER)}g", color = Palette.hud, fontWeight = FontWeight.SemiBold)
-            for (type in UnitType.entries) {
-                val affordable = battle.goldOf(Team.PLAYER) >= type.cost
+        battle.needsCommanderChoice -> Column(
+            pad.verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("Choose your Commander", color = Palette.hud, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            for (c in Commanders.all) {
                 Button(
-                    onClick = { act { battle.buildUnit(type) } },
-                    enabled = affordable,
+                    onClick = { act { battle.chooseCommander(c.id) } },
                     colors = ButtonDefaults.buttonColors(containerColor = Palette.player),
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("${type.label}  —  ${type.cost}g") }
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                        Text(c.name, fontWeight = FontWeight.Bold)
+                        Text(c.theme, fontSize = 11.sp)
+                        Text(c.passives.joinToString("  ·  ") { it.label }, fontSize = 11.sp)
+                    }
+                }
             }
+        }
+
+        battle.buildMenuOpen -> Column(
+            pad.verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text("Build at HQ — ${battle.goldOf(Team.PLAYER)}g", color = Palette.hud, fontWeight = FontWeight.SemiBold)
+            val gold = battle.goldOf(Team.PLAYER)
+            for (type in UnitType.entries.filter { it.basic }) {
+                val cost = battle.buildCost(Team.PLAYER, type, elite = false) ?: continue
+                BuildButton("${type.label} — ${cost}g", enabled = gold >= cost) {
+                    act { battle.buildUnit(type) }
+                }
+            }
+            // Elite signature unit.
+            battle.commanderOf(Team.PLAYER)?.signature?.let { sig ->
+                val cost = battle.buildCost(Team.PLAYER, sig, elite = true)
+                if (cost != null) BuildButton("★ Elite ${sig.label} — ${cost}g", enabled = gold >= cost, elite = true) {
+                    act { battle.buildUnit(sig, elite = true) }
+                }
+            }
+            // Commander hero unit.
+            val cCost = battle.commanderPrice(Team.PLAYER)
+            val has = battle.hasCommander(Team.PLAYER)
+            BuildButton(
+                if (has) "Commander (deployed)" else "★ Commander — ${cCost}g",
+                enabled = !has && gold >= cCost,
+                elite = true,
+            ) { act { battle.buildUnit(UnitType.COMMANDER) } }
+
             OutlinedButton(onClick = { act { battle.dismissMenus() } }, modifier = Modifier.fillMaxWidth()) {
                 Text("Close")
             }
@@ -214,6 +260,16 @@ private fun Controls(battle: Battle, act: (() -> kotlin.Unit) -> kotlin.Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun BuildButton(label: String, enabled: Boolean, elite: Boolean = false, onClick: () -> kotlin.Unit) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(containerColor = if (elite) Palette.capture else Palette.player),
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text(label, color = if (elite) Color.Black else Color.White) }
 }
 
 private fun DrawScope.drawBoard(battle: Battle, cs: Float, ox: Float, oy: Float) {
@@ -284,6 +340,15 @@ private fun DrawScope.drawUnits(battle: Battle, cs: Float, ox: Float, oy: Float,
         val tl = Offset(ox + drawPos.x * cs + inset, oy + drawPos.y * cs + inset)
         val sz = Size(cs - 2 * inset, cs - 2 * inset)
         drawRoundRect(color = faded, topLeft = tl, size = sz, cornerRadius = CornerRadius(cs * 0.12f, cs * 0.12f))
+        if (u.elite) {
+            drawRoundRect(
+                color = Palette.capture,
+                topLeft = tl,
+                size = sz,
+                cornerRadius = CornerRadius(cs * 0.12f, cs * 0.12f),
+                style = Stroke(width = cs * 0.05f),
+            )
+        }
 
         val glyph = tm.measure(
             AnnotatedString(u.type.glyph),

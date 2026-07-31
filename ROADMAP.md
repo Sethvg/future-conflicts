@@ -7,9 +7,16 @@ of "Done".
 
 ## Done
 
-- **Foundation & tests.** `jvm()` host-test target; 22 passing tests
-  (`./gradlew :composeApp:jvmTest`) covering combat math, movement/blocking,
-  turn flow, victory, and enemy AI. High-level docs (Vision/Design/Architecture).
+- **Commanders & factions.** Data-driven Commanders with 3 fixed army-wide passives
+  (MOVE/RANGE/FIREPOWER/ARMOR/INCOME/DISCOUNT) folded through a stat pipeline;
+  Commander hero unit (one per player, rebuy cost compounds per loss); Elite
+  signature units (mid tier); pre-battle Commander pick + roster of 3 factions.
+- **Economy & HQ purchasing + Action funnel.** Serializable `Action`s applied by
+  `Battle.apply` (UI + AI both emit them); cities/HQ income, upgrades (raze→L1),
+  capture, capture-the-HQ win.
+- **Foundation & tests.** `jvm()` host-test target; **38 passing tests**
+  (`./gradlew :composeApp:jvmTest`) across combat, movement, turn flow, economy,
+  and commanders. High-level docs (Vision/Design/Architecture).
 - **Vertical slice (playable, on device).** KMP + Compose Multiplatform scaffold;
   pure-Kotlin tactics core (terrain, 5 unit types, AW-style damage + counters,
   Dijkstra movement, select→move→attack flow, greedy enemy AI, win-on-elimination,

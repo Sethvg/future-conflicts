@@ -15,7 +15,11 @@ package com.example.futureconflicts.game
  *    renderer reads. During the ACTION phase the selected unit has *not* moved yet;
  *    [previewPos] is where it would go, and [apply] performs the move atomically.
  */
-class Battle(scenario: Scenario = Scenarios.twinRidges()) {
+class Battle(
+    scenario: Scenario = Scenarios.twinRidges(),
+    playerCommander: Commander? = null,
+    enemyCommander: Commander? = null,
+) {
 
     val map: GameMap = scenario.map
     val units: MutableList<Unit> = scenario.units.toMutableList()
@@ -23,6 +27,8 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
         scenario.buildings.associateByTo(LinkedHashMap()) { it.pos }
     private val players: Map<Team, PlayerState> =
         mapOf(Team.PLAYER to PlayerState(), Team.ENEMY to PlayerState())
+    private val commanders: MutableMap<Team, Commander?> =
+        mutableMapOf(Team.PLAYER to playerCommander, Team.ENEMY to enemyCommander)
 
     var turn: Team = Team.PLAYER
         private set
@@ -61,6 +67,65 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
     val buildMenuOpen: Boolean get() = buildMenuAt != null
     val upgradeOpen: Boolean get() = upgradeAt != null
 
+    // ---- Commanders & the stat pipeline ----
+    fun commanderOf(team: Team): Commander? = commanders[team]
+    val needsCommanderChoice: Boolean get() = commanders[Team.PLAYER] == null
+
+    /** Choose the player's Commander; the enemy takes a different one automatically. */
+    fun chooseCommander(id: String) {
+        commanders[Team.PLAYER] = Commanders.byId(id)
+        commanders[Team.ENEMY] = Commanders.all.firstOrNull { it.id != id } ?: Commanders.all.first()
+        message = "Blue Army — Day 1. Tap a unit, or your HQ to build."
+    }
+
+    private fun passive(team: Team, kind: PassiveKind): Int = commanders[team]?.amount(kind) ?: 0
+
+    fun effectiveMove(u: Unit): Int {
+        var m = u.type.maxMove + passive(u.team, PassiveKind.MOVE)
+        if (u.elite) m += Elite.MOVE_BONUS
+        return m.coerceAtLeast(1)
+    }
+
+    /** Range passives only extend indirect units, so direct units stay melee. */
+    fun effectiveMaxRange(u: Unit): Int =
+        if (u.type.indirect) u.type.maxRange + passive(u.team, PassiveKind.RANGE) else u.type.maxRange
+
+    private fun attackMul(u: Unit): Double {
+        var pct = passive(u.team, PassiveKind.FIREPOWER)
+        if (u.elite) pct += Elite.FIREPOWER_BONUS
+        return 1.0 + pct / 100.0
+    }
+
+    private fun defenseMul(u: Unit): Double {
+        var pct = passive(u.team, PassiveKind.ARMOR)
+        if (u.elite) pct += Elite.ARMOR_BONUS
+        return (1.0 - pct / 100.0).coerceAtLeast(0.1)
+    }
+
+    private fun damageOf(attacker: Unit, defender: Unit): Int =
+        Combat.damage(attacker, defender, map[defender.pos], attackMul(attacker), defenseMul(defender))
+
+    private fun inRangeEff(u: Unit, from: Pos, target: Pos): Boolean =
+        Combat.inRange(from, target, u.type.minRange, effectiveMaxRange(u))
+
+    // ---- HQ production pricing (used by the UI too) ----
+    fun hasCommander(team: Team): Boolean =
+        units.any { it.alive && it.team == team && it.type == UnitType.COMMANDER }
+
+    fun commanderPrice(team: Team): Int {
+        val c = commanders[team] ?: return UnitType.COMMANDER.cost
+        return players.getValue(team).commanderCost(UnitType.COMMANDER.cost, c.rebuyMultiplier)
+    }
+
+    /** Gold cost to build [type] (optionally [elite]) for [team], or null if illegal. */
+    fun buildCost(team: Team, type: UnitType, elite: Boolean): Int? {
+        if (type == UnitType.COMMANDER) return if (elite) null else commanderPrice(team)
+        if (!type.basic) return null
+        if (elite && commanders[team]?.signature != type) return null
+        val discounted = type.cost * (100 - passive(team, PassiveKind.DISCOUNT)) / 100
+        return if (elite) (discounted * Elite.COST_MULTIPLIER).toInt() else discounted
+    }
+
     /** The city targeted by the upgrade prompt, if it can still be upgraded & afforded. */
     fun upgradeableCity(): Building? {
         val b = upgradeAt?.let { buildings[it] } ?: return null
@@ -91,7 +156,8 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
 
     private fun canAct(u: Unit): Boolean = u.team == turn && !u.hasActed
 
-    private fun reachableFor(u: Unit): Map<Pos, Int> = Movement.reachable(map, u, ::unitAt)
+    private fun reachableFor(u: Unit): Map<Pos, Int> =
+        Movement.reachable(map, u, ::unitAt, effectiveMove(u))
 
     /** Validate + perform the movement part of an action. Returns the unit, or null. */
     private fun execMove(from: Pos, to: Pos): Unit? {
@@ -109,7 +175,7 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
         if (a.to != a.from && !reachableFor(u).containsKey(a.to)) return false
         val victim = unitAt(a.target) ?: return false
         if (victim.team == u.team) return false
-        if (!Combat.inRange(u.type, a.to, a.target)) return false
+        if (!inRangeEff(u, a.to, a.target)) return false
         u.pos = a.to
         resolveAttack(u, victim)
         finishUnit(u, null)
@@ -144,12 +210,15 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
     private fun execBuild(a: Action.Build): Boolean {
         val hq = buildings[a.at] ?: return false
         if (hq.kind != Building.Kind.HQ || hq.owner != turn) return false
+        if (a.type == UnitType.COMMANDER && hasCommander(turn)) return false // one per player
+        val cost = buildCost(turn, a.type, a.elite) ?: return false
         val ps = players.getValue(turn)
-        if (ps.gold < a.type.cost) return false
+        if (ps.gold < cost) return false
         val spawn = spawnTileFor(a.at) ?: return false
-        ps.gold -= a.type.cost
-        units.add(Unit(a.type, turn, spawn).also { it.hasActed = true })
-        message = "${turn.label} built ${a.type.label} (−${a.type.cost}g)."
+        ps.gold -= cost
+        units.add(Unit(a.type, turn, spawn, elite = a.elite).also { it.hasActed = true })
+        val name = if (a.elite) "Elite ${a.type.label}" else a.type.label
+        message = "${turn.label} built $name (−${cost}g)."
         return true
     }
 
@@ -176,16 +245,16 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
     // ===============================================================
 
     private fun resolveAttack(attacker: Unit, defender: Unit) {
-        val dealt = Combat.damage(attacker, defender, map[defender.pos])
+        val dealt = damageOf(attacker, defender)
         defender.hp -= dealt
         defender.clampHp()
 
         var note = "${attacker.type.label} hits ${defender.type.label} for $dealt."
         if (defender.alive &&
             !defender.type.indirect &&
-            Combat.inRange(defender.type, defender.pos, attacker.pos)
+            inRangeEff(defender, defender.pos, attacker.pos)
         ) {
-            val back = Combat.damage(defender, attacker, map[attacker.pos])
+            val back = damageOf(defender, attacker)
             attacker.hp -= back
             attacker.clampHp()
             note += " Counter for $back."
@@ -195,6 +264,10 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
     }
 
     private fun removeDead() {
+        // A destroyed Commander compounds that side's future rebuy cost.
+        for (u in units) if (!u.alive && u.type == UnitType.COMMANDER) {
+            players.getValue(u.team).commanderLosses++
+        }
         units.removeAll { !it.alive }
     }
 
@@ -295,7 +368,7 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
         previewPos = dest
         reachable = emptyMap()
         targets = if (u.type.indirect && dest != u.pos) emptySet()
-        else units.filter { it.alive && it.team != u.team && Combat.inRange(u.type, dest, it.pos) }
+        else units.filter { it.alive && it.team != u.team && inRangeEff(u, dest, it.pos) }
             .map { it.pos }.toSet()
         canCaptureHere = u.type.canCapture && buildings[dest]?.let { it.owner != u.team } == true
         phase = Phase.ACTION
@@ -314,9 +387,9 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
         reachable = reachableFor(u)
     }
 
-    fun buildUnit(type: UnitType) {
+    fun buildUnit(type: UnitType, elite: Boolean = false) {
         val at = buildMenuAt ?: return
-        apply(Action.Build(type, at))
+        apply(Action.Build(type, at, elite))
         dismissMenus()
     }
 
@@ -356,8 +429,8 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
     private fun beginTurn(team: Team) {
         turn = team
         if (team == Team.PLAYER) day++
-        players.getValue(team).gold +=
-            buildings.values.filter { it.owner == team }.sumOf { it.incomePerTurn }
+        val base = buildings.values.filter { it.owner == team }.sumOf { it.incomePerTurn }
+        players.getValue(team).gold += base + base * passive(team, PassiveKind.INCOME) / 100
         units.filter { it.team == team }.forEach { it.hasActed = false }
         clearSelection()
     }
@@ -382,10 +455,10 @@ class Battle(scenario: Scenario = Scenarios.twinRidges()) {
         for (tile in stand) {
             if (u.type.indirect && tile != u.pos) continue
             for (victim in units.filter { it.alive && it.team == Team.PLAYER }) {
-                if (!Combat.inRange(u.type, tile, victim.pos)) continue
+                if (!inRangeEff(u, tile, victim.pos)) continue
                 val saved = u.pos
                 u.pos = tile
-                val dmg = Combat.damage(u, victim, map[victim.pos])
+                val dmg = damageOf(u, victim)
                 u.pos = saved
                 val score = dmg + if (dmg >= victim.hp) 100 else 0
                 if (score > bestScore) { bestScore = score; bestTile = tile; bestTarget = victim.pos }
