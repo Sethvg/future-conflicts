@@ -80,14 +80,28 @@ internal fun Battle.execBuild(a: Action.Build): Boolean {
 
 internal fun Battle.execUpgrade(a: Action.Upgrade): Boolean {
     val b = buildings[a.at] ?: return false
-    if (b.kind != Building.Kind.CITY || b.owner != turn) return false
-    if (b.level >= Economy.CITY_MAX_LEVEL) return false
+    if (b.owner != turn) return false
     val ps = players.getValue(turn)
-    if (ps.gold < Economy.CITY_UPGRADE_COST) return false
-    ps.gold -= Economy.CITY_UPGRADE_COST
-    b.level++
-    message = "City upgraded to L${b.level} (+${Economy.CITY_INCOME_PER_LEVEL}/turn)."
-    return true
+    return when (b.kind) {
+        Building.Kind.CITY -> {
+            if (b.level >= Economy.CITY_MAX_LEVEL) return false
+            if (ps.gold < Economy.CITY_UPGRADE_COST) return false
+            ps.gold -= Economy.CITY_UPGRADE_COST
+            b.level++
+            message = "City upgraded to L${b.level} (+${Economy.CITY_INCOME_PER_LEVEL}/turn)."
+            true
+        }
+        // A Drone Command's level *is* its flight size, so upgrading buys another drone.
+        Building.Kind.DRONE_COMMAND -> {
+            if (b.level >= Drones.MAX_LEVEL) return false
+            if (ps.gold < Drones.UPGRADE_COST) return false
+            ps.gold -= Drones.UPGRADE_COST
+            b.level++
+            message = "Drone Command upgraded to L${b.level} (${b.level} drones)."
+            true
+        }
+        else -> false
+    }
 }
 
 /** Apply a supply-drop boon to [a.team]. Effects are fixed by [a.kind] (no RNG here). */
@@ -156,9 +170,12 @@ internal fun Battle.resolveAttack(attacker: Unit, defender: Unit) {
 }
 
 internal fun Battle.removeDead() {
-    // A destroyed Commander compounds that side's future rebuy cost.
-    for (u in units) if (!u.alive && u.type == UnitType.COMMANDER) {
-        players.getValue(u.team).commanderLosses++
+    for (u in units) {
+        if (u.alive) continue
+        // A destroyed Commander compounds that side's future rebuy cost.
+        if (u.type == UnitType.COMMANDER) players.getValue(u.team).commanderLosses++
+        // A downed drone's slot sits empty for a cooldown instead of costing gold.
+        if (u.type == UnitType.DRONE) noteDroneLost(u.team)
     }
     units.removeAll { !it.alive }
 }
@@ -172,8 +189,11 @@ internal fun Battle.finishUnit(u: Unit, msg: String?) {
 
 internal fun Battle.checkVictory() {
     if (winner != null) return // a captured HQ already decided it
-    val playerAlive = units.any { it.team == Team.PLAYER }
-    val enemyAlive = units.any { it.team == Team.ENEMY }
+    // Drones are free, respawning recon — they don't keep a defeated army "alive",
+    // otherwise a side with only a Drone Command could never be eliminated.
+    fun fields(t: Team) = units.any { it.team == t && it.type != UnitType.DRONE }
+    val playerAlive = fields(Team.PLAYER)
+    val enemyAlive = fields(Team.ENEMY)
     winner = when {
         !enemyAlive -> Team.PLAYER
         !playerAlive -> Team.ENEMY

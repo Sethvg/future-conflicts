@@ -37,7 +37,7 @@ object Scenarios {
 
     private val TWIN_RIDGES_ROWS = listOf(
         "ABH.Y..mm.",
-        ".c..ff..m.",
+        ".c..ff..D.",
         "...ff.....",
         "ss......c.",
         "s...m.....",
@@ -46,7 +46,7 @@ object Scenarios {
         "....mm....",
         ".c...m...s",
         "....ff..ss",
-        ".mm....c..",
+        "Dmm....c..",
         "....Y.HBA.",
     )
 
@@ -55,7 +55,7 @@ object Scenarios {
         '-' -> Terrain.ROAD
         'f' -> Terrain.FOREST
         'm' -> Terrain.MOUNTAIN
-        'c', 'B', 'Y', 'A' -> Terrain.CITY // production buildings stand on urban tiles
+        'c', 'B', 'Y', 'A', 'D' -> Terrain.CITY // production buildings stand on urban tiles
         's' -> Terrain.SEA
         'H' -> Terrain.HQ
         else -> Terrain.PLAINS
@@ -80,6 +80,7 @@ object Scenarios {
                         'B' -> add(Building(Pos(x, y), Building.Kind.BARRACKS, owner = side))
                         'Y' -> add(Building(Pos(x, y), Building.Kind.FACTORY, owner = side))
                         'A' -> add(Building(Pos(x, y), Building.Kind.AIRPORT, owner = side))
+                        'D' -> add(Building(Pos(x, y), Building.Kind.DRONE_COMMAND, owner = side))
                     }
                 }
             }

@@ -55,13 +55,14 @@ object Combat {
         UnitType.ANTI_AIR to mapOf(
             UnitType.INFANTRY to 60, UnitType.MECH to 55, UnitType.RECON to 55,
             UnitType.TANK to 25, UnitType.ARTILLERY to 45, UnitType.COMMANDER to 30,
-            UnitType.ANTI_AIR to 45, UnitType.GUNSHIP to 105,
+            UnitType.ANTI_AIR to 45, UnitType.GUNSHIP to 105, UnitType.DRONE to 120,
         ),
         UnitType.GUNSHIP to mapOf(
             UnitType.INFANTRY to 75, UnitType.MECH to 70, UnitType.RECON to 70,
             UnitType.TANK to 55, UnitType.ARTILLERY to 65, UnitType.COMMANDER to 50,
-            UnitType.ANTI_AIR to 45, UnitType.GUNSHIP to 55,
+            UnitType.ANTI_AIR to 45, UnitType.GUNSHIP to 55, UnitType.DRONE to 100,
         ),
+        // The DRONE has no attack row at all — it is an unarmed scout (strike package TBD).
     )
 
     fun basePercent(attacker: UnitType, defender: UnitType): Int =

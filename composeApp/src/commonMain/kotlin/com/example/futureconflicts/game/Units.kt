@@ -43,14 +43,20 @@ enum class UnitType(
      *  only anti-air (and other aircraft) can hit it. Built at the Airport; carries fuel. */
     GUNSHIP("Gunship", "G", maxMove = 7, minRange = 1, maxRange = 1, cost = 9000, vision = 3, category = Category.AIR, unitClass = AirClass(maxFuel = 20)),
 
+    /** Autonomous scout drone fielded free by a Drone Command. Flies, sees far, carries no
+     *  weapon (strike package is a planned upgrade), and anti-air shreds it. Never built
+     *  from a menu — the Drone Command launches it (see [Drones]). */
+    DRONE("Drone", "d", maxMove = 6, minRange = 1, maxRange = 1, cost = 0, vision = 5, category = Category.AIR, unitClass = AirClass(maxFuel = Drones.DRONE_FUEL, hitsAir = false)),
+
     /** The Commander hero unit: strong, expensive, one per player, rebuy escalates. Built at the HQ. */
     COMMANDER("Commander", "★", maxMove = 6, minRange = 1, maxRange = 1, cost = 16000, vision = 4, category = Category.VEHICLE, unitClass = GroundClass());
 
     /** Indirect units (artillery) attack at range but cannot move and fire. */
     val indirect: Boolean get() = maxRange > 1
 
-    /** Buildable as a normal unit (the Commander has its own HQ-only path). */
-    val basic: Boolean get() = this != COMMANDER
+    /** Buildable from a production menu. The Commander has its own HQ-only path, and
+     *  drones are launched by a Drone Command rather than purchased. */
+    val basic: Boolean get() = this != COMMANDER && this != DRONE
 
     // ---- Behaviour, delegated to the unit's class ----
     val moveClass: MoveClass get() = unitClass.moveClass

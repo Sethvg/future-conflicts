@@ -26,6 +26,8 @@ internal fun Battle.beginTurn(team: Team) {
     players.getValue(team).gold += base + base * passive(team, PassiveKind.INCOME) / 100
     units.filter { it.team == team }.forEach { it.hasActed = false }
     refuelOrCrash(team)
+    // The autonomous drone flight acts before the owner takes manual control.
+    runDronePhase(team)
     clearSelection()
     // Every INTERVAL turns a side takes, it receives a seeded supply drop.
     if (turnsTaken.getValue(team) % Supply.INTERVAL == 0) {
@@ -50,6 +52,7 @@ internal fun Battle.refuelOrCrash(team: Team) {
         }
     }
     if (crashed.isNotEmpty()) {
+        crashed.filter { it.type == UnitType.DRONE }.forEach { noteDroneLost(it.team, fromCrash = true) }
         units.removeAll(crashed)
         message = "${team.label} lost ${crashed.size} aircraft to fuel exhaustion."
         checkVictory() // a fuel crash can eliminate a side's last unit

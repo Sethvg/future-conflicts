@@ -56,7 +56,8 @@ class FootClass : GroundClass() {
     override val canCapture: Boolean get() = true
 }
 
-/** Aircraft: ignore terrain, fly over everything, burn fuel, refuel at an Airport/HQ. */
+/** Aircraft: ignore terrain, fly over everything, burn fuel, refuel at an air base
+ *  (Airport/HQ — and the Drone Command, which is the drones' home field). */
 class AirClass(
     override val maxFuel: Int,
     override val hitsAir: Boolean = true,
@@ -65,7 +66,8 @@ class AirClass(
     override val ignoresTerrain: Boolean get() = true
     override fun canEnter(terrain: Terrain): Boolean = true // flies over sea and mountains alike
     override fun refuelsAt(kind: Building.Kind): Boolean =
-        kind == Building.Kind.AIRPORT || kind == Building.Kind.HQ
+        kind == Building.Kind.AIRPORT || kind == Building.Kind.HQ ||
+            kind == Building.Kind.DRONE_COMMAND
 }
 
 /** Ships: confined to water, serviced by a Port. (Used from Slice 4.) */

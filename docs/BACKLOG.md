@@ -31,6 +31,21 @@ Tags: `[ai]` `[ux]` `[fog]` `[econ]` `[arch]` `[art]` `[balance]` `[test]`.
 - `[ux]` Commander-select has no "change commander" entry mid-game (only via
   Restart, which also keeps the same commanders now).
 
+## Drone Command
+- `[arch]` **Drone launches bypass the Action funnel** — `launchDrones` calls `units.add`
+  directly instead of emitting an `Action` (as `SupplyDrop` does). Fine for replay today
+  (launches are a pure function of turn-start state) but it's an untracked mutation for
+  future serialization/netcode. Add `Action.LaunchDrone(from, to)`.
+- `[arch]` **Flight capacity is pooled, not per-building** — with two Drone Commands the
+  deficit is spread round-robin rather than each base topping up to its own level; a
+  captured forward base can host drones "belonging" to the home one.
+- `[balance]` Drone tuning is provisional: fuel 12, burn 2/turn, rebuild cooldown 5,
+  upgrade 2500 (a player can max a flight to L3 on day one for their whole treasury).
+- `[ai]` The enemy never upgrades or contests Drone Commands (part of the no-economy gap).
+- `[perf]` The drone phase recomputes vision + a Dijkstra per drone per turn, and
+  `execMove` repeats the same Dijkstra. Cache per phase if the sim gets hot (the
+  balance-simulator drives thousands of runs).
+
 ## Fog of war
 - `[fog]` Fog is **view-only**: targeting and movement use true positions, so an
   unseen forest unit can be shelled by artillery and invisible enemies still block

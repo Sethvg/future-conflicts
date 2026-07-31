@@ -19,6 +19,11 @@ internal fun Battle.onTapIdle(p: Pos) {
                 message = if (b.level >= Economy.CITY_MAX_LEVEL) "City is fully upgraded."
                 else "Upgrade city to L${b.level + 1}? (${Economy.CITY_UPGRADE_COST}g)"
             }
+            b.kind == Building.Kind.DRONE_COMMAND -> {
+                upgradeAt = p
+                message = if (b.level >= Drones.MAX_LEVEL) "Drone Command is at max (${b.level} drones)."
+                else "Upgrade Drone Command to L${b.level + 1}? (${Drones.UPGRADE_COST}g)"
+            }
             b.kind.builds != null -> { buildMenuAt = p; message = "Build a unit here." }
         }
         return

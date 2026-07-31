@@ -234,13 +234,14 @@ private fun Controls(battle: Battle, version: Int, act: (() -> kotlin.Unit) -> k
 
         battle.upgradeOpen -> Row(pad, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val city = battle.upgradeableCity()
-            val canAfford = city != null && battle.goldOf(Team.PLAYER) >= Economy.CITY_UPGRADE_COST
+            val cost = battle.upgradeCost()
+            val canAfford = city != null && battle.goldOf(Team.PLAYER) >= cost
             Button(
                 onClick = { act { battle.upgradeCity() } },
                 enabled = canAfford,
                 colors = ButtonDefaults.buttonColors(containerColor = Palette.player),
                 modifier = Modifier.weight(1f),
-            ) { Text(if (city == null) "Maxed" else "Upgrade (${Economy.CITY_UPGRADE_COST}g)") }
+            ) { Text(if (city == null) "Maxed" else "Upgrade (${cost}g)") }
             OutlinedButton(onClick = { act { battle.dismissMenus() } }, modifier = Modifier.weight(1f)) {
                 Text("Close")
             }

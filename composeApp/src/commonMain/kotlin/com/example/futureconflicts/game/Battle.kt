@@ -54,6 +54,10 @@ class Battle(
     /** While set, that side's REVEAL boon is active and it sees the whole map. */
     internal var supplyRevealFor: Team? = null
 
+    /** Per-team drone slots waiting out [Drones.REBUILD_COOLDOWN] after a loss
+     *  (one entry per empty slot; see BattleDrones.kt). */
+    internal val droneCooldowns: MutableMap<Team, MutableList<Int>> = mutableMapOf()
+
     /** The most recent supply drop, for the HUD and tests (null until the first drop). */
     var lastSupplyKind: SupplyKind? = null
         internal set
@@ -106,7 +110,7 @@ class Battle(
     fun isUnitVisible(viewer: Team, unit: Unit, visible: Set<Pos> = visibleTiles(viewer)): Boolean =
         !fogEnabled || Vision.isUnitVisible(map, viewer, unit, visible, units)
 
-    private val allTiles: Set<Pos> by lazy {
+    internal val allTiles: Set<Pos> by lazy {
         buildSet { for (y in 0 until map.rows) for (x in 0 until map.cols) add(Pos(x, y)) }
     }
     fun goldOf(team: Team): Int = players.getValue(team).gold
@@ -144,13 +148,21 @@ class Battle(
         return if (elite) (discounted * Elite.COST_MULTIPLIER).toInt() else discounted
     }
 
-    /** The city targeted by the upgrade prompt, if it can still be upgraded & afforded. */
+    /** The building targeted by the upgrade prompt, if it can still be upgraded. */
     fun upgradeableCity(): Building? {
         val b = upgradeAt?.let { buildings[it] } ?: return null
-        if (b.kind != Building.Kind.CITY || b.owner != Team.PLAYER) return null
-        if (b.level >= Economy.CITY_MAX_LEVEL) return null
-        return b
+        if (b.owner != Team.PLAYER) return null
+        return when (b.kind) {
+            Building.Kind.CITY -> if (b.level < Economy.CITY_MAX_LEVEL) b else null
+            Building.Kind.DRONE_COMMAND -> if (b.level < Drones.MAX_LEVEL) b else null
+            else -> null
+        }
     }
+
+    /** Gold to upgrade the building in the upgrade prompt (city vs drone command differ). */
+    fun upgradeCost(): Int =
+        if (upgradeAt?.let { buildings[it] }?.kind == Building.Kind.DRONE_COMMAND)
+            Drones.UPGRADE_COST else Economy.CITY_UPGRADE_COST
 
     /** Units the currently open production building ([buildMenuAt]) can build this turn. */
     fun buildableHere(): List<BuildOption> {
@@ -240,6 +252,7 @@ class Battle(
         supplyRevealFor = null
         lastSupplyKind = null
         lastSupplyTeam = null
+        droneCooldowns.clear()
         clearSelection(); dismissMenus()
         message = "Blue Army — Day 1. Tap a unit, or your HQ to build."
     }

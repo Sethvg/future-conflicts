@@ -11,7 +11,9 @@ package com.example.futureconflicts.game
 /** Greedy AI: best attack, else capture a reachable building, else advance. */
 internal fun Battle.runEnemyTurn() {
     for (u in units.filter { it.team == Team.ENEMY }.toList()) {
-        if (!u.alive || winner != null) continue
+        // hasActed skips units the drone phase already flew — the planner must never
+        // re-drive an autonomous drone (and re-planning them would be wasted work).
+        if (!u.alive || u.hasActed || winner != null) continue
         planEnemy(u)?.let { apply(it) }
     }
     if (winner == null) message = "Red Army finished its turn."
