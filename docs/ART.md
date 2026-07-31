@@ -22,6 +22,21 @@ them into the renderer is a separate step — see *Integration* below.
 - **Grid:** logical tile is square; art authored at **64×64** (units and tiles),
   scaled by the renderer.
 
+> **Before any art work, read the user-level `pixellab` skill** (`~/.claude/skills/pixellab/`)
+> — it maps each asset to the correct PixelLab tool, and using a cheap freeform image
+> tool where a rig/tileset tool was needed is the top cause of bad output. Its rules:
+> - **Units that rotate → `create_character` mode `v3`** (8 directions). Pass
+>   `reference_image_url` when rotating an *existing* sprite so identity is preserved.
+> - **Team-tinted units stay neutral gray + `no_background`** (matches our runtime tint).
+> - **Tiling terrain → `create_tileset`** (Wang, with transition descriptions, chained via
+>   base tile ids) — *never* loose per-tile images.
+> - **Generate candidates and choose:** 5 for marquee assets (commanders, signature
+>   units), 3 for standard ones.
+>
+> ⚠️ **The PixelLab MCP server is not configured for this repo** (only Rogueshapes has it).
+> Add its server block before generating. Until then new units render with the
+> **primitive fallback** (colored token + glyph) — see the queue below.
+
 ### Production pipeline
 
 **Units & animated sprites go through the `pixel-sprite-smith` agent**
@@ -69,6 +84,12 @@ Full eventual need. `[ ]` = not started, `[~]` = generating, `[x]` = staged.
 **Unit map tokens (base, neutral)** — `[x]` infantry `[x]` mech `[x]` recon
 `[x]` tank `[x]` artillery `[x]` commander  *(static base sprites, 80×80, neutral
 gray; directional/animation frames deferred to Batch 4 — smith objects retained)*
+
+**Queued — new units still on the primitive fallback** (added by Slices 2–6; blocked on
+the PixelLab MCP server block for this repo): `[ ]` anti-air `[ ]` gunship `[ ]` drone
+`[ ]` lander `[ ]` destroyer `[ ]` battleship `[ ]` submarine `[ ]` fighter `[ ]` bomber
+`[ ]` heavy tank `[ ]` rockets `[ ]` APC. Also `[ ]` building icons for Barracks /
+Factory / Airport / Port / **Drone Command** / oil well (currently 3-letter labels).
 
 **Terrain tiles** — `[x]` plains `[x]` road `[x]` forest `[x]` mountain
 `[x]` city `[x]` hq `[x]` sea
