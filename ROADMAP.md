@@ -7,6 +7,10 @@ of "Done".
 
 ## Done
 
+- **Slice 3 — Drone Command.** Capturable/upgradeable building fielding up to `level`
+  free, persistent scout drones that fly autonomously before the owner's turn: they seek
+  the most-revealing tile, return to base to refuel, crash when dry, and leave their slot
+  on a rebuild cooldown when lost. Unarmed; only anti-air/gunships can hit them. 96 tests.
 - **Slice 2 — air layer + fuel.** MoveClass (ground/air/naval); aircraft ignore terrain,
   fly over units/water; Gunship (Airport) + Anti-Air (Factory); air immunity via explicit
   `hitsAir`; fuel burn/refuel-at-base/crash; symmetric airports on Twin Ridges. 74 tests.
@@ -70,7 +74,7 @@ AdMob edits so we don't collide on `GameScreen.kt`.
   unit = picking a class, not editing rules. `NavalClass` is ready for Slice 4.
 - **Standing rule from here on:** keep files cohesive and small — no new monolith.
 
-### 3. Drone Command *(signature mechanic)*
+### 3. Drone Command — ✅ done (5eadd91)
 - Building maintains up to **N persistent scout drones** (N = level, free of gold) that
   the AI flies **autonomously before the player's turn** to **reveal fog**, refuelling at
   base (fuel); crash if dry. A downed drone → **long build cooldown** before replacement.

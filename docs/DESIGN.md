@@ -100,6 +100,19 @@ around owned buildings. Enemies standing on **forest** are hidden until one of y
 units is adjacent. The renderer dims fogged tiles and hides unseen enemies.
 Toggle via `Battle.fogEnabled`.
 
+## Drone Command
+
+A capturable, upgradeable building (level = flight size, max 3, 2500g per level) that
+fields **free, persistent scout drones**. At the start of the owner's turn — *before*
+they take manual control — the flight tops up and **flies itself**: each drone moves to
+the reachable tile that reveals the most fog, then heads home to the Drone Command to
+refuel once its fuel only just covers the trip. Run dry and it crashes.
+
+Drones are **unarmed** aircraft (a *strike package* is a planned upgrade): only anti-air
+and gunships can hit them, and they don't count toward the elimination win. A destroyed
+or crashed drone leaves its slot empty for a **rebuild cooldown** — since drones cost no
+gold, downtime is the price.
+
 ## Supply drops
 
 Every `Supply.INTERVAL` (7) turns a side takes, it receives a random **supply drop**
