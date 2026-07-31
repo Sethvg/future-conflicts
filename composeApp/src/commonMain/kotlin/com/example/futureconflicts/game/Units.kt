@@ -17,9 +17,10 @@ enum class UnitType(
     val minRange: Int,
     val maxRange: Int,
     val cost: Int,
+    val canCapture: Boolean = false,
 ) {
-    INFANTRY("Infantry", "I", maxMove = 3, minRange = 1, maxRange = 1, cost = 1000),
-    MECH("Mech", "M", maxMove = 2, minRange = 1, maxRange = 1, cost = 3000),
+    INFANTRY("Infantry", "I", maxMove = 3, minRange = 1, maxRange = 1, cost = 1000, canCapture = true),
+    MECH("Mech", "M", maxMove = 2, minRange = 1, maxRange = 1, cost = 3000, canCapture = true),
     RECON("Recon", "R", maxMove = 8, minRange = 1, maxRange = 1, cost = 4000),
     TANK("Tank", "T", maxMove = 6, minRange = 1, maxRange = 1, cost = 7000),
     ARTILLERY("Artillery", "A", maxMove = 5, minRange = 2, maxRange = 3, cost = 6000);

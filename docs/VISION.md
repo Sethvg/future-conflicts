@@ -127,10 +127,19 @@ We won't build netcode yet, but we won't paint ourselves out of it either:
 - **Per-player view state** (fog) separate from the authoritative world.
 - Same core runs local hot-seat, vs-AI, and (later) async/live online.
 
+## Decided
+
+- **Losing your Commander escalates its rebuy cost.** Each Commander has a specific
+  multiplier; every time your Commander is destroyed, the cost to buy it again goes
+  up by that multiplier (compounding per loss:
+  `rebuyCost = baseCost × multiplier ^ timesLost`). So a fragile hero you keep
+  feeding the front becomes ruinously expensive — losing the Commander is a real
+  setback without being an instant game-over.
+- **The 3 passives are fixed per Commander** (not a player-chosen loadout). Each
+  Commander *is* its trait set — identity, not customization.
+
 ## Open questions (revisit)
 
-- Does losing your Commander apply a penalty, or is it purely a unit loss?
-- Are the 3 passives fixed per Commander, or partly player-chosen (loadout)?
 - Supply-drop timer: shared clock or per-player? Boon table weights?
 - Commander powers (active, chargeable) — in scope, or passives-only for v1?
 - Map source: hand-authored only, or a map format + editor later?

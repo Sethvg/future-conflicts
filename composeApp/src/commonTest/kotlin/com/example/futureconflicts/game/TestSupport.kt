@@ -18,3 +18,6 @@ fun occupancy(units: List<Unit>): (Pos) -> Unit? =
 
 fun battleOf(map: GameMap, vararg units: Unit): Battle =
     Battle(Scenario(map, units.toList()))
+
+fun battleWith(map: GameMap, units: List<Unit>, buildings: List<Building>): Battle =
+    Battle(Scenario(map, units, buildings))

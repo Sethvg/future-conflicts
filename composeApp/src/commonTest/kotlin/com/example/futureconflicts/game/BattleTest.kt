@@ -40,12 +40,13 @@ class BattleTest {
         val battle = battleOf(map, tank, enemy)
 
         battle.onTap(Pos(0, 0))            // select
-        battle.onTap(Pos(1, 0))            // move adjacent to enemy
-        assertEquals(Battle.Phase.TARGETING, battle.phase)
+        battle.onTap(Pos(1, 0))            // preview move adjacent to enemy
+        assertEquals(Battle.Phase.ACTION, battle.phase)
         battle.onTap(Pos(2, 0))            // attack
 
         assertTrue(enemy.hp < Unit.MAX_HP, "enemy should have taken damage")
         assertTrue(tank.hp < Unit.MAX_HP, "adjacent mech should counter the tank")
+        assertEquals(Pos(1, 0), tank.pos, "attack commits the previewed move")
         assertTrue(tank.hasActed)
         assertEquals(Battle.Phase.IDLE, battle.phase)
     }
@@ -60,7 +61,7 @@ class BattleTest {
         // Fire in place: select, then tap own tile -> targets available.
         battle.onTap(Pos(0, 1))
         battle.onTap(Pos(0, 1))
-        assertEquals(Battle.Phase.TARGETING, battle.phase)
+        assertEquals(Battle.Phase.ACTION, battle.phase)
         battle.onTap(Pos(2, 1))
         assertTrue(enemy.hp < Unit.MAX_HP, "artillery should hit from range without moving")
         // Indirect units take no counter.
@@ -75,10 +76,13 @@ class BattleTest {
         val battle = battleOf(map, arty, enemy)
 
         battle.onTap(Pos(0, 1))            // select
-        battle.onTap(Pos(1, 1))            // move — enemy now at manhattan 2, but we moved
-        assertEquals(Battle.Phase.IDLE, battle.phase, "moved indirect unit has no attack step")
+        battle.onTap(Pos(1, 1))            // preview move — indirect can't then fire
+        assertEquals(Battle.Phase.ACTION, battle.phase)
+        assertTrue(battle.targets.isEmpty(), "moved indirect unit has no targets")
+        battle.waitHere()                  // confirm the move
         assertEquals(Unit.MAX_HP, enemy.hp, "no shot after moving")
         assertTrue(arty.hasActed)
+        assertEquals(Pos(1, 1), arty.pos)
     }
 
     @Test

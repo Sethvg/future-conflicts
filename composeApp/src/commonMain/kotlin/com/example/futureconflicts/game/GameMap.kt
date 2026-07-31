@@ -20,8 +20,12 @@ class GameMap(
     }
 }
 
-/** A complete starting position: the map plus both armies. */
-class Scenario(val map: GameMap, val units: List<Unit>)
+/** A complete starting position: the map, both armies, and the capturable buildings. */
+class Scenario(
+    val map: GameMap,
+    val units: List<Unit>,
+    val buildings: List<Building> = emptyList(),
+)
 
 /**
  * The built-in "Twin Ridges" skirmish. Hand-authored ASCII terrain (Blue army
@@ -63,6 +67,26 @@ object Scenarios {
         val tiles = Array(rows * cols) { i -> terrainOf(TWIN_RIDGES_ROWS[i / cols][i % cols]) }
         val map = GameMap(cols, rows, tiles)
 
+        // Buildings derive from terrain: HQs are owned (north = Red, south = Blue),
+        // cities start neutral and are fought over for income.
+        val buildings = buildList {
+            for (y in 0 until rows) {
+                for (x in 0 until cols) {
+                    when (map[x, y]) {
+                        Terrain.HQ -> add(
+                            Building(
+                                Pos(x, y),
+                                Building.Kind.HQ,
+                                owner = if (y < rows / 2) Team.ENEMY else Team.PLAYER,
+                            ),
+                        )
+                        Terrain.CITY -> add(Building(Pos(x, y), Building.Kind.CITY, owner = null))
+                        else -> {}
+                    }
+                }
+            }
+        }
+
         val units = listOf(
             // Red army (enemy) — north
             Unit(UnitType.ARTILLERY, Team.ENEMY, Pos(3, 0)),
@@ -77,6 +101,6 @@ object Scenarios {
             Unit(UnitType.RECON, Team.PLAYER, Pos(2, 9)),
             Unit(UnitType.TANK, Team.PLAYER, Pos(5, 10)),
         )
-        return Scenario(map, units)
+        return Scenario(map, units, buildings)
     }
 }
