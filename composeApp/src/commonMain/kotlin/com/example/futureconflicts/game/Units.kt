@@ -17,16 +17,17 @@ enum class UnitType(
     val minRange: Int,
     val maxRange: Int,
     val cost: Int,
+    val vision: Int,
     val canCapture: Boolean = false,
 ) {
-    INFANTRY("Infantry", "I", maxMove = 3, minRange = 1, maxRange = 1, cost = 1000, canCapture = true),
-    MECH("Mech", "M", maxMove = 2, minRange = 1, maxRange = 1, cost = 3000, canCapture = true),
-    RECON("Recon", "R", maxMove = 8, minRange = 1, maxRange = 1, cost = 4000),
-    TANK("Tank", "T", maxMove = 6, minRange = 1, maxRange = 1, cost = 7000),
-    ARTILLERY("Artillery", "A", maxMove = 5, minRange = 2, maxRange = 3, cost = 6000),
+    INFANTRY("Infantry", "I", maxMove = 3, minRange = 1, maxRange = 1, cost = 1000, vision = 2, canCapture = true),
+    MECH("Mech", "M", maxMove = 2, minRange = 1, maxRange = 1, cost = 3000, vision = 2, canCapture = true),
+    RECON("Recon", "R", maxMove = 8, minRange = 1, maxRange = 1, cost = 4000, vision = 5),
+    TANK("Tank", "T", maxMove = 6, minRange = 1, maxRange = 1, cost = 7000, vision = 3),
+    ARTILLERY("Artillery", "A", maxMove = 5, minRange = 2, maxRange = 3, cost = 6000, vision = 2),
 
     /** The Commander hero unit: strong, expensive, one per player, rebuy escalates. */
-    COMMANDER("Commander", "★", maxMove = 6, minRange = 1, maxRange = 1, cost = 16000);
+    COMMANDER("Commander", "★", maxMove = 6, minRange = 1, maxRange = 1, cost = 16000, vision = 4);
 
     /** Indirect units (artillery) attack at range but cannot move and fire. */
     val indirect: Boolean get() = maxRange > 1

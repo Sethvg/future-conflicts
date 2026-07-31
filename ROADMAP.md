@@ -7,6 +7,10 @@ of "Done".
 
 ## Done
 
+- **Fog of war.** Per-player vision view (kept out of the authoritative sim for
+  multiplayer correctness): per-unit sight radius, mountains extend sight, forests
+  hide enemies until you're adjacent, owned buildings grant vision. Renderer dims
+  fogged tiles and hides unseen enemies. `fogEnabled` toggle for debugging.
 - **Commanders & factions.** Data-driven Commanders with 3 fixed army-wide passives
   (MOVE/RANGE/FIREPOWER/ARMOR/INCOME/DISCOUNT) folded through a stat pipeline;
   Commander hero unit (one per player, rebuy cost compounds per loss); Elite
@@ -24,47 +28,31 @@ of "Done".
 
 ## Next — sequenced
 
-### 1. Economy & HQ purchasing *(current focus)*
-- Refactor toward **Actions as data** + a **seeded RNG** in game state (see
-  ARCHITECTURE.md "Target architecture") — do this here, before piling on features.
-- Gold per player; **cities** produce income; **city upgrades** (gold → +income/level);
-  **razing a city resets it to level 1**.
-- **HQ production menu:** buy Basic units, Elite/unique units, and the Commander,
-  priced by power. Spawn on/adjacent to HQ.
-- **Capture** mechanic (infantry captures cities/HQ) + **capture-the-HQ** win
-  condition.
-- Tests: income accrual, upgrade/raze, purchase affordability & spawning, capture,
-  HQ-capture victory.
+### 1. Supply drops *(current focus)*
+- Add a **seeded RNG** to game state (deterministic for replay/multiplayer).
+- **Every-7-turns supply drop**: weighted boon (spawn a unit / gold windfall /
+  reveal fog / heal & resupply), rolled from the seed.
+- Tests: deterministic rolls from a fixed seed, boon effects, 7-turn cadence.
 
-### 2. Commanders & factions
-- Commander data model: themed roster + **3 army-wide passive traits** (data-driven
-  stat pipeline). Elite unit variants per faction.
-- Recolorable skins (team-color mask) — art wiring comes with the art pass.
-- Tests: passive stacking onto effective stats; per-faction rosters.
-
-### 3. Fog of war + supply drops
-- Per-unit **vision**, per-player view state, hidden enemies.
-- **Every-7-turns supply drop**: seeded weighted boon (spawn / gold / reveal / heal).
-- Tests: vision reveal, fog correctness per player, deterministic drop rolls.
-
-### 4. Art pass (gritty detailed pixel art)
+### 2. Art pass (gritty detailed pixel art)
 - PixelLab sprites for units (per faction) + terrain tiles; **team-color mask**
   recolor at runtime.
 - **Battle animation scenes** composed from layers (attacker + defender + backdrop).
 - Replace rect/glyph rendering with sprite draws.
 
-### 5. Game feel & polish
+### 3. Game feel & polish
 - Animate/step the enemy turn; explicit Move/Attack/Wait menu + Cancel/undo;
   damage preview before committing; attack flashes; sound.
 
-### 6. Multiplayer
+### 4. Multiplayer
 - With Actions + determinism + per-player views already in place: hot-seat first,
   then async/live online.
 
 ## Known simplifications (current)
 
-- Armies pre-placed; no economy/production yet.
-- Enemy turn resolves instantly; greedy AI.
+- Enemy turn resolves instantly; greedy AI **sees through fog** (ignores vision).
+- Fog is a view layer only — targeting/movement still use true positions (a hidden
+  unit can be shelled/blocks a path); fine for now, revisit with polish.
 - One built-in map ("Twin Ridges"); no loader/editor.
 - Uniform terrain move cost across unit types (no movement classes yet).
 - Rendering is colored rects + letter glyphs (art pass pending).

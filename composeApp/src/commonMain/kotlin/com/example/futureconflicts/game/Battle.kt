@@ -63,6 +63,21 @@ class Battle(
     fun unitAt(p: Pos): Unit? = units.firstOrNull { it.alive && it.pos == p }
     fun buildingAt(p: Pos): Building? = buildings[p]
     val buildingsView: Collection<Building> get() = buildings.values
+
+    /** Fog of war toggle. When off, everything is visible (useful for debugging). */
+    var fogEnabled: Boolean = true
+
+    /** Tiles [team] can currently see (all tiles when fog is off). */
+    fun visibleTiles(team: Team): Set<Pos> =
+        if (!fogEnabled) allTiles else Vision.visibleTiles(map, team, units, buildings.values)
+
+    /** Whether [viewer] can see [unit] (pass the precomputed [visible] set to avoid rework). */
+    fun isUnitVisible(viewer: Team, unit: Unit, visible: Set<Pos> = visibleTiles(viewer)): Boolean =
+        !fogEnabled || Vision.isUnitVisible(map, viewer, unit, visible, units)
+
+    private val allTiles: Set<Pos> by lazy {
+        buildSet { for (y in 0 until map.rows) for (x in 0 until map.cols) add(Pos(x, y)) }
+    }
     fun goldOf(team: Team): Int = players.getValue(team).gold
     val buildMenuOpen: Boolean get() = buildMenuAt != null
     val upgradeOpen: Boolean get() = upgradeAt != null

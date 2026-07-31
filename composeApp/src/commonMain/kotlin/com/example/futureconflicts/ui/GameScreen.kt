@@ -67,6 +67,7 @@ private object Palette {
     val enemy = Color(0xFFE5484D)
     val neutral = Color(0xFFB6BEC7)
     val capture = Color(0xFFFFD54F)
+    val fog = Color(0xAA0A0D12)
     val hud = Color(0xFFE6ECF2)
     val hudDim = Color(0xFF9AA6B2)
     val gold = Color(0xFFFFCB2E)
@@ -148,9 +149,11 @@ fun GameScreen(modifier: Modifier = Modifier) {
                 val oy = (size.height - cs * battle.map.rows) / 2f
                 cellSize = cs; originX = ox; originY = oy
 
+                val visible = battle.visibleTiles(Team.PLAYER)
                 drawBoard(battle, cs, ox, oy)
                 drawBuildings(battle, cs, ox, oy, textMeasurer)
-                drawUnits(battle, cs, ox, oy, textMeasurer)
+                drawFog(battle, visible, cs, ox, oy)
+                drawUnits(battle, cs, ox, oy, textMeasurer, visible)
             }
         }
 
@@ -326,9 +329,27 @@ private fun DrawScope.drawBuildings(battle: Battle, cs: Float, ox: Float, oy: Fl
     }
 }
 
-private fun DrawScope.drawUnits(battle: Battle, cs: Float, ox: Float, oy: Float, tm: TextMeasurer) {
+private fun DrawScope.drawFog(battle: Battle, visible: Set<Pos>, cs: Float, ox: Float, oy: Float) {
+    for (y in 0 until battle.map.rows) {
+        for (x in 0 until battle.map.cols) {
+            if (Pos(x, y) !in visible) {
+                drawRect(Palette.fog, Offset(ox + x * cs, oy + y * cs), Size(cs, cs))
+            }
+        }
+    }
+}
+
+private fun DrawScope.drawUnits(
+    battle: Battle,
+    cs: Float,
+    ox: Float,
+    oy: Float,
+    tm: TextMeasurer,
+    visible: Set<Pos>,
+) {
     for (u in battle.units) {
         if (!u.alive) continue
+        if (!battle.isUnitVisible(Team.PLAYER, u, visible)) continue // hidden by fog
         // Draw the selected unit at its previewed destination while choosing an action.
         val drawPos = if (u === battle.selected && battle.phase == Battle.Phase.ACTION) {
             battle.previewPos ?: u.pos
